@@ -1,47 +1,68 @@
 import { sanitizeFilename } from './sanitize'
 
 /**
- * List of words that should NOT be considered as employee names
+ * List of phrases/words that should NOT be considered as employee names
  */
+const BLACKLIST_PHRASES = [
+  'ASSINATURA DO FUNCIONARIO',
+  'ASSINATURA DO FUNCIONÁRIO',
+  'DECLARO TER RECEBIDO',
+  'NOME DO FUNCIONARIO',
+  'NOME DO FUNCIONÁRIO',
+  'TOTAL DE VENCIMENTOS',
+  'TOTAL DE DESCONTOS',
+  'VALOR LIQUIDO',
+  'VALOR LÍQUIDO',
+  'HORAS NORMAIS',
+  'BASE CALCULO',
+  'BASE CÁLCULO',
+  'FOLHA MENSAL',
+  'DISTRIBUICAO DE LUCROS',
+  'DISTRIBUIÇÃO DE LUCROS',
+]
+
 const BLACKLIST_WORDS = [
-  'DECLARO',
-  'TER',
-  'RECEBIDO',
-  'IMPORTANCIA',
-  'LIQUIDA',
-  'DISCRIMINADA',
-  'NESTE',
-  'RECIBO',
-  'ASSINATURA',
-  'FUNCIONARIO',
-  'TOTAL',
-  'VENCIMENTOS',
-  'DESCONTOS',
-  'VALOR',
-  'LIQUIDO',
-  'HORAS',
-  'NORMAIS',
-  'COMISSOES',
-  'REFLEXO',
-  'BASE',
-  'CALCULO',
-  'FGTS',
+  'CODIGO',
+  'CÓDIGO',
+  'CBO',
+  'CNPJ',
+  'CPF',
   'INSS',
   'IRRF',
-  'FAIXA',
-  'SALARIO',
-  'ALAN',
-  'MARTINS',
-  'TAVARES',
-  'CIA',
+  'FGTS',
   'LTDA',
-  'CNPJ',
+  'CIA',
+  'ASSINATURA',
+  'FUNCIONARIO',
+  'FUNCIONÁRIO',
+  'DECLARO',
+  'RECEBIDO',
+  'RECIBO',
+  'VENCIMENTOS',
+  'DESCONTOS',
+  'LIQUIDO',
+  'LÍQUIDO',
+  'TOTAL',
+  'BASE',
+  'CALCULO',
+  'CÁLCULO',
+  'SALARIO',
+  'SALÁRIO',
   'FOLHA',
   'MENSAL',
   'GERAL',
-  'MENSALISTA',
+  'DATA',
+  'DEPARTAMENTO',
+  'FILIAL',
+  'ADMISSAO',
+  'ADMISSÃO',
+  'REFERENCIA',
+  'REFERÊNCIA',
+  'DESCRICAO',
+  'DESCRIÇÃO',
   'JANEIRO',
   'FEVEREIRO',
+  'MARÇO',
   'MARCO',
   'ABRIL',
   'MAIO',
@@ -52,168 +73,128 @@ const BLACKLIST_WORDS = [
   'OUTUBRO',
   'NOVEMBRO',
   'DEZEMBRO',
-  'CAIXA',
-  'AGENCIA',
-  'CONTA',
-  'CODIGO',
-  'DESCRICAO',
-  'REFERENCIA',
-  'DATA',
-  'ADMISSAO',
-  'DEPARTAMENTO',
-  'FILIAL',
-  'DISTRIBUICAO',
-  'LUCROS',
-  'PRODUTOS',
-  'FUNCIONARIOS',
-  'DESC',
-  'EMP',
-  'CRED',
-  'TRAB',
-  'MATRICULA',
 ]
 
 /**
- * Check if a name contains blacklisted words
+ * Check if text matches any blacklisted phrase
  */
-function containsBlacklistedWords(name: string): boolean {
-  const upperName = name.toUpperCase()
-  const words = upperName.split(/\s+/)
+function matchesBlacklistPhrase(text: string): boolean {
+  const upper = text.toUpperCase().trim()
+  return BLACKLIST_PHRASES.some((phrase) => upper.includes(phrase))
+}
 
-  // If more than half of the words are blacklisted, reject
-  let blacklistedCount = 0
-  for (const word of words) {
-    const cleanWord = word.replace(/[^A-Z]/gi, '')
-    if (BLACKLIST_WORDS.includes(cleanWord)) {
-      blacklistedCount++
-    }
-  }
-
-  return blacklistedCount >= words.length / 2
+/**
+ * Check if name contains blacklisted words
+ */
+function containsBlacklistedWord(name: string): boolean {
+  const words = name.toUpperCase().split(/\s+/)
+  return words.some((word) => BLACKLIST_WORDS.includes(word))
 }
 
 /**
  * Validate if a string looks like a valid Brazilian name
  */
 function isValidName(name: string): boolean {
-  if (!name || name.length < 8) return false
+  if (!name || name.length < 10) return false
 
-  // Count words (at least 2 for a valid name)
-  const words = name.trim().split(/\s+/)
+  const trimmed = name.trim()
+
+  // Must have at least 2 words (first name + last name)
+  const words = trimmed.split(/\s+/)
   if (words.length < 2) return false
 
-  // Check if mostly letters and spaces
-  const letterCount = (name.match(/[A-ZÀ-Úa-zà-ú]/g) || []).length
-  const digitCount = (name.match(/\d/g) || []).length
-
-  // Should be mostly letters
-  if (letterCount < name.length * 0.8) return false
-
-  // Should have no digits
-  if (digitCount > 0) return false
-
-  // Each word should have at least 2 characters
+  // Each word must be at least 2 letters
   if (words.some((w) => w.length < 2)) return false
 
+  // Must be mostly letters (allow spaces)
+  const letterCount = (trimmed.match(/[A-ZÀ-Úa-zà-ú]/g) || []).length
+  const spaceCount = (trimmed.match(/\s/g) || []).length
+  if (letterCount + spaceCount < trimmed.length * 0.95) return false
+
+  // No digits allowed
+  if (/\d/.test(trimmed)) return false
+
   // Check against blacklist
-  if (containsBlacklistedWords(name)) return false
+  if (matchesBlacklistPhrase(trimmed)) return false
+  if (containsBlacklistedWord(trimmed)) return false
 
   return true
 }
 
 /**
- * Clean up extracted name
- */
-function cleanName(name: string): string {
-  // Remove extra whitespace
-  let cleaned = name.replace(/\s+/g, ' ').trim()
-
-  // Remove leading/trailing numbers and special chars
-  cleaned = cleaned.replace(/^[\d\s\-_.,:;]+/, '').replace(/[\d\s\-_.,:;]+$/, '')
-
-  // Remove trailing cargo/function names
-  const stopPatterns = [
-    /\s+CONSULTOR.*$/i,
-    /\s+COORDENADOR.*$/i,
-    /\s+GERENTE.*$/i,
-    /\s+VENDEDOR.*$/i,
-    /\s+AUXILIAR.*$/i,
-    /\s+ANALISTA.*$/i,
-    /\s+ASSISTENTE.*$/i,
-    /\s+SUPERVISOR.*$/i,
-    /\s+DIRETOR.*$/i,
-    /\s+OPERADOR.*$/i,
-    /\s+TECNICO.*$/i,
-    /\s+ESTAGIARIO.*$/i,
-  ]
-
-  for (const pattern of stopPatterns) {
-    cleaned = cleaned.replace(pattern, '')
-  }
-
-  return cleaned.trim()
-}
-
-/**
- * Extract employee name from page text using multiple heuristics
+ * Extract employee name from page text
  */
 export function extractEmployeeName(pageText: string): string | null {
-  // Normalize text: compact whitespace but preserve some structure
+  // Normalize: single spaces
   const text = pageText.replace(/\s+/g, ' ').trim()
-  const upperText = text.toUpperCase()
 
-  // Heuristic 1: Look for pattern where we have a number followed by a name followed by CBO number
-  // Pattern: [small number 1-999] [NAME IN CAPS 3+ words] [6-digit CBO]
-  // Example: "12 BRUNA RAYANE OLIVEIRA DOS SANTOS 521110"
-  const pattern1 = /\b(\d{1,3})\s+([A-ZÀ-Ú][A-ZÀ-Ú\s]{10,60}?)\s+(\d{6})\b/g
-  let match1
-  while ((match1 = pattern1.exec(upperText)) !== null) {
-    const potentialName = cleanName(match1[2])
-    if (isValidName(potentialName)) {
-      return sanitizeFilename(potentialName)
-    }
-  }
-
-  // Heuristic 2: Look for "Nome do Funcionário" followed by name and CBO
-  // The name appears AFTER "Nome do Funcionário" header and before CBO number
-  const pattern2 =
-    /NOME\s+DO\s+FUNCION[AÁ]RIO\s+CBO[\s\S]{0,50}?(\d{1,3})\s+([A-ZÀ-Ú][A-ZÀ-Ú\s]{10,60}?)\s+(\d{6})/i
-  const match2 = upperText.match(pattern2)
-  if (match2 && match2[2]) {
-    const potentialName = cleanName(match2[2])
-    if (isValidName(potentialName)) {
-      return sanitizeFilename(potentialName)
-    }
-  }
-
-  // Heuristic 3: Look for name between "Código" header row and CBO
-  // Pattern captures the structure: Código Nome do Funcionário CBO ... [num] [NAME] [CBO num]
-  const pattern3 =
-    /C[OÓ]DIGO\s+NOME\s+DO\s+FUNCION[AÁ]RIO\s+CBO[\s\S]{0,100}?(\d{1,3})\s+([A-ZÀ-Ú][A-ZÀ-Ú\s]{10,60}?)\s+(\d{6})/i
-  const match3 = upperText.match(pattern3)
-  if (match3 && match3[2]) {
-    const potentialName = cleanName(match3[2])
-    if (isValidName(potentialName)) {
-      return sanitizeFilename(potentialName)
-    }
-  }
-
-  // Heuristic 4: Find all sequences of 3+ uppercase words and validate
-  const pattern4 = /\b([A-ZÀ-Ú]{2,}(?:\s+[A-ZÀ-Ú]{2,}){2,})\b/g
+  let match
   const candidates: string[] = []
-  let match4
-  while ((match4 = pattern4.exec(upperText)) !== null) {
-    const potentialName = cleanName(match4[1])
-    if (isValidName(potentialName) && potentialName.length >= 15) {
+
+  // PATTERN 1: "Código [num] [NAME] Nome do Funcionário CBO [cbo]"
+  // This matches the exact structure seen in the payslips
+  const pattern1 =
+    /C[oó]digo\s+(\d{1,3})\s+([A-ZÀ-Ú][A-ZÀ-Ú\s]+?)\s+Nome\s+do\s+Funcion[aá]rio\s+CBO\s+(\d{6})/gi
+  while ((match = pattern1.exec(text)) !== null) {
+    const potentialName = match[2].trim()
+    if (isValidName(potentialName)) {
       candidates.push(potentialName)
     }
   }
 
-  // Return the first valid candidate that's not blacklisted
-  for (const candidate of candidates) {
-    if (!containsBlacklistedWords(candidate)) {
-      return sanitizeFilename(candidate)
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b.length - a.length)
+    return sanitizeFilename(candidates[0])
+  }
+
+  // PATTERN 2: "[num] [NAME] [6-digit CBO]" - direct pattern
+  const pattern2 = /\b(\d{1,3})\s+([A-ZÀ-Ú][A-ZÀ-Ú\s]{10,50}?)\s+(\d{6})\b/g
+  while ((match = pattern2.exec(text)) !== null) {
+    const codeNum = parseInt(match[1], 10)
+    const potentialName = match[2].trim()
+
+    // Code should be employee code (1-500)
+    if (codeNum > 500) continue
+
+    if (isValidName(potentialName)) {
+      candidates.push(potentialName)
     }
+  }
+
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b.length - a.length)
+    return sanitizeFilename(candidates[0])
+  }
+
+  // PATTERN 3: Look for "Nome do Funcionário" label followed by name
+  const pattern3 =
+    /Nome\s+do\s+Funcion[aá]rio[:\s]+([A-ZÀ-Ú][A-ZÀ-Ú\s]{10,50}?)(?:\s+CBO|\s+\d{6}|\s+Departamento)/gi
+  while ((match = pattern3.exec(text)) !== null) {
+    const potentialName = match[1].trim()
+    if (isValidName(potentialName)) {
+      candidates.push(potentialName)
+    }
+  }
+
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => b.length - a.length)
+    return sanitizeFilename(candidates[0])
+  }
+
+  // FALLBACK: Find sequences of 3+ uppercase words that look like names
+  const fallbackPattern = /\b([A-ZÀ-Ú]{2,}(?:\s+[A-ZÀ-Ú]{2,}){2,})\b/g
+  const fallbackCandidates: string[] = []
+
+  while ((match = fallbackPattern.exec(text)) !== null) {
+    const potentialName = match[1].trim()
+    if (isValidName(potentialName) && potentialName.length >= 15) {
+      fallbackCandidates.push(potentialName)
+    }
+  }
+
+  if (fallbackCandidates.length > 0) {
+    fallbackCandidates.sort((a, b) => b.length - a.length)
+    return sanitizeFilename(fallbackCandidates[0])
   }
 
   return null
