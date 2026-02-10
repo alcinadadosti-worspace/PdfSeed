@@ -40,13 +40,16 @@ export default function App() {
     try {
       // Read file as ArrayBuffer
       const arrayBuffer = await file.arrayBuffer()
-      setPdfData(arrayBuffer)
 
-      // Extract text from all pages
+      // Make a copy for pdf-lib (pdfjs may detach the original)
+      const pdfDataCopy = arrayBuffer.slice(0)
+      setPdfData(pdfDataCopy)
+
+      // Extract text from all pages (use original, pdfjs will handle it)
       setProgress({ current: 0, total: 1, label: 'Extraindo texto...' })
 
       const pageTexts = await extractTextFromPDF(
-        arrayBuffer,
+        arrayBuffer.slice(0), // Pass a copy to pdfjs too
         (current, total) => {
           setProgress({
             current,
