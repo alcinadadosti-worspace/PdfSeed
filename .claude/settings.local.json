@@ -7,7 +7,8 @@
       "Bash(git remote add:*)",
       "Bash(git branch:*)",
       "Bash(git push:*)",
-      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: TypeScript errors for pdfjs-dist and Blob types\n\n- Import TextItem type from pdfjs-dist for proper type predicate\n- Use data.buffer instead of data for Blob constructor compatibility\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: TypeScript errors for pdfjs-dist and Blob types\n\n- Import TextItem type from pdfjs-dist for proper type predicate\n- Use data.buffer instead of data for Blob constructor compatibility\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git commit:*)"
     ]
   }
 }
