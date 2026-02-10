@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# PDF files (test data)
+*.pdf
+
 # Build output
 dist/
 
