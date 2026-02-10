@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Initial implementation of PDFSeed - Payslip PDF splitter\n\n- Complete static site \\(SPA\\) for splitting multi-page payslip PDFs\n- Automatic employee name extraction using multiple heuristics\n- Individual PDF download and bulk ZIP download\n- Raycast-inspired dark UI with drag & drop\n- 100% client-side processing for privacy\n- Progress tracking for large PDFs \\(100+ pages\\)\n- Manual name editing for unrecognized pages\n\nStack: Vite + React + TypeScript + TailwindCSS\nLibraries: pdfjs-dist, pdf-lib, JSZip\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix: TypeScript errors for pdfjs-dist and Blob types\n\n- Import TextItem type from pdfjs-dist for proper type predicate\n- Use data.buffer instead of data for Blob constructor compatibility\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ]
   }
 }

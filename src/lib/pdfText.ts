@@ -1,4 +1,5 @@
 import * as pdfjs from 'pdfjs-dist'
+import type { TextItem } from 'pdfjs-dist/types/src/display/api'
 
 // Configure the worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -28,7 +29,7 @@ export async function extractTextFromPDF(
 
     // Build text from items, preserving approximate order
     const textItems = textContent.items
-      .filter((item): item is { str: string } => 'str' in item)
+      .filter((item): item is TextItem => 'str' in item)
       .map((item) => item.str)
       .join(' ')
 

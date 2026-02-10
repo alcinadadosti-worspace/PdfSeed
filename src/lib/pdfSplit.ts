@@ -49,7 +49,7 @@ export async function extractAllPages(
  * Download a PDF file
  */
 export function downloadPDF(data: Uint8Array, filename: string): void {
-  const blob = new Blob([data], { type: 'application/pdf' })
+  const blob = new Blob([data.buffer], { type: 'application/pdf' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
