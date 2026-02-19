@@ -4,13 +4,25 @@ import { Dropzone } from './components/Dropzone'
 import { ProgressBar } from './components/ProgressBar'
 import { ResultsList } from './components/ResultsList'
 import { PageResult } from './components/ResultItem'
+import { ExcelUpload } from './components/ExcelUpload'
+import { EmailVerification } from './components/EmailVerification'
+import { EmailSummary } from './components/EmailSummary'
 import { extractTextFromPDF } from './lib/pdfText'
 import { extractSinglePage, downloadPDF } from './lib/pdfSplit'
 import { extractEmployeeName } from './lib/nameExtract'
 import { createZipWithPDFs, downloadZip } from './lib/zip'
 import { deduplicateFilenames } from './lib/dedupe'
+import { readEmployeeList, Employee } from './lib/excel'
+import { matchEmployees, EmailMatch } from './lib/emailMatch'
 
-type AppState = 'idle' | 'processing' | 'ready' | 'error'
+type AppState =
+  | 'idle'
+  | 'processing'
+  | 'ready'
+  | 'excel_upload'
+  | 'email_verification'
+  | 'email_summary'
+  | 'error'
 
 interface Progress {
   current: number
@@ -30,6 +42,11 @@ export default function App() {
     current: number
     total: number
   } | null>(null)
+
+  // Email matching state
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [emailMatches, setEmailMatches] = useState<EmailMatch[]>([])
+  const [isLoadingExcel, setIsLoadingExcel] = useState(false)
 
   const handleFileSelect = useCallback(async (file: File) => {
     setState('processing')
@@ -110,6 +127,8 @@ export default function App() {
     setDownloadingIndex(null)
     setIsDownloadingAll(false)
     setDownloadAllProgress(null)
+    setEmployees([])
+    setEmailMatches([])
   }, [])
 
   const handleNameChange = useCallback((pageIndex: number, name: string) => {
@@ -172,6 +191,102 @@ export default function App() {
       setDownloadAllProgress(null)
     }
   }, [pdfData, results])
+
+  // Email flow handlers
+  const handlePrepareEmails = useCallback(() => {
+    setState('excel_upload')
+  }, [])
+
+  const handleExcelSelect = useCallback(
+    async (file: File) => {
+      setIsLoadingExcel(true)
+      setError(null)
+
+      try {
+        const employeeList = await readEmployeeList(file)
+        setEmployees(employeeList)
+
+        // Match employees with PDF results
+        const matches = matchEmployees(results, employeeList)
+        setEmailMatches(matches)
+
+        setState('email_verification')
+      } catch (err) {
+        console.error('Error reading Excel:', err)
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Erro ao ler a planilha. Verifique o formato.'
+        )
+      } finally {
+        setIsLoadingExcel(false)
+      }
+    },
+    [results]
+  )
+
+  const handleSkipExcel = useCallback(() => {
+    setState('ready')
+  }, [])
+
+  const handleMatchUpdate = useCallback(
+    (pageIndex: number, employee: Employee | null) => {
+      setEmailMatches((prev) =>
+        prev.map((m) =>
+          m.pageIndex === pageIndex
+            ? {
+                ...m,
+                employee,
+                matchScore: employee ? 100 : 0,
+                status: employee ? 'manual' : m.status,
+              }
+            : m
+        )
+      )
+    },
+    []
+  )
+
+  const handleEmailConfirm = useCallback(() => {
+    setState('email_summary')
+  }, [])
+
+  const handleEmailBack = useCallback(() => {
+    setState('email_verification')
+  }, [])
+
+  const handleBackToResults = useCallback(() => {
+    setState('ready')
+    setEmailMatches([])
+  }, [])
+
+  const handleExportList = useCallback(() => {
+    const validMatches = emailMatches.filter((m) => m.employee !== null)
+
+    // Create CSV content
+    const csvHeader = 'Pagina,Nome no PDF,Email,Nome na Planilha\n'
+    const csvRows = validMatches
+      .map(
+        (m) =>
+          `${m.pageNumber},"${m.pdfName || ''}","${m.employee?.email || ''}","${
+            m.employee?.name || ''
+          }"`
+      )
+      .join('\n')
+
+    const csvContent = csvHeader + csvRows
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'lista_envio_holerites.csv'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [emailMatches])
 
   return (
     <div className="min-h-screen bg-dark-900 text-white">
@@ -236,9 +351,41 @@ export default function App() {
             onNameChange={handleNameChange}
             onDownload={handleDownload}
             onDownloadAll={handleDownloadAll}
+            onPrepareEmails={handlePrepareEmails}
             downloadingIndex={downloadingIndex}
             isDownloadingAll={isDownloadingAll}
             downloadAllProgress={downloadAllProgress}
+          />
+        )}
+
+        {/* Excel Upload State */}
+        {state === 'excel_upload' && (
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <ExcelUpload
+              onFileSelect={handleExcelSelect}
+              onSkip={handleSkipExcel}
+              isLoading={isLoadingExcel}
+            />
+          </div>
+        )}
+
+        {/* Email Verification State */}
+        {state === 'email_verification' && (
+          <EmailVerification
+            matches={emailMatches}
+            employees={employees}
+            onMatchUpdate={handleMatchUpdate}
+            onConfirm={handleEmailConfirm}
+            onCancel={handleBackToResults}
+          />
+        )}
+
+        {/* Email Summary State */}
+        {state === 'email_summary' && (
+          <EmailSummary
+            matches={emailMatches}
+            onBack={handleEmailBack}
+            onExportList={handleExportList}
           />
         )}
 
