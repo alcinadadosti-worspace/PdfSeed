@@ -359,9 +359,10 @@ export default function App() {
         )}
 
         {/* Email Summary State */}
-        {state === 'email_summary' && (
+        {state === 'email_summary' && pdfData && (
           <EmailSummary
             matches={emailMatches}
+            pdfData={pdfData}
             onBack={handleEmailBack}
             onExportList={handleExportList}
           />
