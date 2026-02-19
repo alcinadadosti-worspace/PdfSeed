@@ -6,11 +6,32 @@ export interface Employee {
 }
 
 /**
+ * Load employee list from the default path (public/data/emails.xlsx)
+ */
+export async function loadEmployeeListFromPath(): Promise<Employee[]> {
+  const response = await fetch('/data/emails.xlsx')
+
+  if (!response.ok) {
+    throw new Error('Planilha de emails não encontrada em data/emails.xlsx')
+  }
+
+  const arrayBuffer = await response.arrayBuffer()
+  return parseEmployeeList(arrayBuffer)
+}
+
+/**
  * Read the Excel file and extract employee names and emails
  * Expected columns: Nome (or name) and Email (or email)
  */
 export async function readEmployeeList(file: File): Promise<Employee[]> {
   const arrayBuffer = await file.arrayBuffer()
+  return parseEmployeeList(arrayBuffer)
+}
+
+/**
+ * Parse employee list from ArrayBuffer
+ */
+function parseEmployeeList(arrayBuffer: ArrayBuffer): Employee[] {
   const workbook = XLSX.read(arrayBuffer, { type: 'array' })
 
   // Get the first sheet

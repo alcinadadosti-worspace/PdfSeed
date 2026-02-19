@@ -4,7 +4,6 @@ import { Dropzone } from './components/Dropzone'
 import { ProgressBar } from './components/ProgressBar'
 import { ResultsList } from './components/ResultsList'
 import { PageResult } from './components/ResultItem'
-import { ExcelUpload } from './components/ExcelUpload'
 import { EmailVerification } from './components/EmailVerification'
 import { EmailSummary } from './components/EmailSummary'
 import { extractTextFromPDF } from './lib/pdfText'
@@ -12,14 +11,13 @@ import { extractSinglePage, downloadPDF } from './lib/pdfSplit'
 import { extractEmployeeName } from './lib/nameExtract'
 import { createZipWithPDFs, downloadZip } from './lib/zip'
 import { deduplicateFilenames } from './lib/dedupe'
-import { readEmployeeList, Employee } from './lib/excel'
+import { loadEmployeeListFromPath, Employee } from './lib/excel'
 import { matchEmployees, EmailMatch } from './lib/emailMatch'
 
 type AppState =
   | 'idle'
   | 'processing'
   | 'ready'
-  | 'excel_upload'
   | 'email_verification'
   | 'email_summary'
   | 'error'
@@ -193,41 +191,31 @@ export default function App() {
   }, [pdfData, results])
 
   // Email flow handlers
-  const handlePrepareEmails = useCallback(() => {
-    setState('excel_upload')
-  }, [])
+  const handlePrepareEmails = useCallback(async () => {
+    setIsLoadingExcel(true)
+    setError(null)
 
-  const handleExcelSelect = useCallback(
-    async (file: File) => {
-      setIsLoadingExcel(true)
-      setError(null)
+    try {
+      const employeeList = await loadEmployeeListFromPath()
+      setEmployees(employeeList)
 
-      try {
-        const employeeList = await readEmployeeList(file)
-        setEmployees(employeeList)
+      // Match employees with PDF results
+      const matches = matchEmployees(results, employeeList)
+      setEmailMatches(matches)
 
-        // Match employees with PDF results
-        const matches = matchEmployees(results, employeeList)
-        setEmailMatches(matches)
+      setState('email_verification')
+    } catch (err) {
+      console.error('Error loading employee list:', err)
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao carregar a planilha de emails.'
+      )
+    } finally {
+      setIsLoadingExcel(false)
+    }
+  }, [results])
 
-        setState('email_verification')
-      } catch (err) {
-        console.error('Error reading Excel:', err)
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Erro ao ler a planilha. Verifique o formato.'
-        )
-      } finally {
-        setIsLoadingExcel(false)
-      }
-    },
-    [results]
-  )
-
-  const handleSkipExcel = useCallback(() => {
-    setState('ready')
-  }, [])
 
   const handleMatchUpdate = useCallback(
     (pageIndex: number, employee: Employee | null) => {
@@ -354,19 +342,9 @@ export default function App() {
             onPrepareEmails={handlePrepareEmails}
             downloadingIndex={downloadingIndex}
             isDownloadingAll={isDownloadingAll}
+            isLoadingEmails={isLoadingExcel}
             downloadAllProgress={downloadAllProgress}
           />
-        )}
-
-        {/* Excel Upload State */}
-        {state === 'excel_upload' && (
-          <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <ExcelUpload
-              onFileSelect={handleExcelSelect}
-              onSkip={handleSkipExcel}
-              isLoading={isLoadingExcel}
-            />
-          </div>
         )}
 
         {/* Email Verification State */}
