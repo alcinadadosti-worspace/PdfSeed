@@ -24,6 +24,17 @@ export function SlackSummary({
   onBack,
   onExportList,
 }: SlackSummaryProps) {
+  // Estados devem ser declarados primeiro
+  const [sendStates, setSendStates] = useState<Map<number, SendState>>(
+    new Map()
+  )
+  const [isSendingAll, setIsSendingAll] = useState(false)
+  const [slackConnected, setSlackConnected] = useState<boolean | null>(null)
+  const [slackTeam, setSlackTeam] = useState<string>('')
+  const [manualMatches, setManualMatches] = useState<Map<number, { name: string; slackId: string }>>(new Map())
+  const [expandedSuggestion, setExpandedSuggestion] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string>('')
+
   // Considera válido se tiver employee COM slackId OU se tiver correção manual
   const validMatches = matches.filter((m) => m.employee?.slackId || manualMatches.has(m.pageIndex))
   // Ignorados: sem employee OU sem slackId E sem correção manual
@@ -44,18 +55,6 @@ export function SlackSummary({
     setExpandedSuggestion(null)
     setSearchQuery('')
   }
-
-  const [sendStates, setSendStates] = useState<Map<number, SendState>>(
-    new Map()
-  )
-  const [isSendingAll, setIsSendingAll] = useState(false)
-  const [slackConnected, setSlackConnected] = useState<boolean | null>(null)
-  const [slackTeam, setSlackTeam] = useState<string>('')
-
-  // Estado para correções manuais de nomes
-  const [manualMatches, setManualMatches] = useState<Map<number, { name: string; slackId: string }>>(new Map())
-  const [expandedSuggestion, setExpandedSuggestion] = useState<number | null>(null)
-  const [searchQuery, setSearchQuery] = useState<string>('')
 
   // Test Slack connection on mount
   useEffect(() => {
