@@ -6,7 +6,6 @@ interface EmailVerificationProps {
   matches: EmailMatch[]
   employees: Employee[]
   onMatchUpdate: (pageIndex: number, employee: Employee | null) => void
-  onConfirm: () => void
   onSlackConfirm: () => void
   onCancel: () => void
 }
@@ -15,7 +14,6 @@ export function EmailVerification({
   matches,
   employees,
   onMatchUpdate,
-  onConfirm,
   onSlackConfirm,
   onCancel,
 }: EmailVerificationProps) {

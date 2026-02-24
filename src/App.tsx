@@ -237,10 +237,6 @@ export default function App() {
     []
   )
 
-  const handleEmailConfirm = useCallback(() => {
-    setState('email_summary')
-  }, [])
-
   const handleSlackConfirm = useCallback(() => {
     setState('slack_summary')
   }, [])
@@ -363,7 +359,6 @@ export default function App() {
             matches={emailMatches}
             employees={employees}
             onMatchUpdate={handleMatchUpdate}
-            onConfirm={handleEmailConfirm}
             onSlackConfirm={handleSlackConfirm}
             onCancel={handleBackToResults}
           />
