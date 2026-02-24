@@ -5,10 +5,9 @@ interface ResultsListProps {
   onNameChange: (pageIndex: number, name: string) => void
   onDownload: (pageIndex: number, name: string) => void
   onDownloadAll: () => void
-  onPrepareEmails?: () => void
+  onPrepareSlack?: () => void
   downloadingIndex?: number | null
   isDownloadingAll?: boolean
-  isLoadingEmails?: boolean
   downloadAllProgress?: { current: number; total: number } | null
 }
 
@@ -17,10 +16,9 @@ export function ResultsList({
   onNameChange,
   onDownload,
   onDownloadAll,
-  onPrepareEmails,
+  onPrepareSlack,
   downloadingIndex,
   isDownloadingAll,
-  isLoadingEmails,
   downloadAllProgress,
 }: ResultsListProps) {
   const needsReviewCount = results.filter((r) => !r.name).length
@@ -46,53 +44,15 @@ export function ResultsList({
         </div>
 
         <div className="flex gap-3">
-          {onPrepareEmails && (
+          {onPrepareSlack && (
             <button
-              onClick={onPrepareEmails}
-              disabled={isLoadingEmails}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-500 text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+              onClick={onPrepareSlack}
+              className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl transition-colors"
             >
-              {isLoadingEmails ? (
-                <>
-                  <svg
-                    className="w-5 h-5 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  <span>Carregando...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span>Preparar Envio</span>
-                </>
-              )}
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" />
+              </svg>
+              <span>Enviar via Slack</span>
             </button>
           )}
 

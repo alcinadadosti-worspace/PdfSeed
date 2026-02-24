@@ -4,23 +4,19 @@ import { Dropzone } from './components/Dropzone'
 import { ProgressBar } from './components/ProgressBar'
 import { ResultsList } from './components/ResultsList'
 import { PageResult } from './components/ResultItem'
-import { EmailVerification } from './components/EmailVerification'
-import { EmailSummary } from './components/EmailSummary'
 import { SlackSummary } from './components/SlackSummary'
 import { extractTextFromPDF } from './lib/pdfText'
 import { extractSinglePage, downloadPDF } from './lib/pdfSplit'
 import { extractEmployeeName } from './lib/nameExtract'
 import { createZipWithPDFs, downloadZip } from './lib/zip'
 import { deduplicateFilenames } from './lib/dedupe'
-import { loadEmployeeListFromPath, Employee } from './lib/excel'
-import { matchEmployees, EmailMatch } from './lib/emailMatch'
+import { getSlackIdByName } from './lib/slackMapping'
+import { EmailMatch } from './lib/emailMatch'
 
 type AppState =
   | 'idle'
   | 'processing'
   | 'ready'
-  | 'email_verification'
-  | 'email_summary'
   | 'slack_summary'
   | 'error'
 
@@ -43,10 +39,8 @@ export default function App() {
     total: number
   } | null>(null)
 
-  // Email matching state
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [emailMatches, setEmailMatches] = useState<EmailMatch[]>([])
-  const [isLoadingExcel, setIsLoadingExcel] = useState(false)
+  // Slack matches
+  const [slackMatches, setSlackMatches] = useState<EmailMatch[]>([])
 
   const handleFileSelect = useCallback(async (file: File) => {
     setState('processing')
@@ -127,8 +121,7 @@ export default function App() {
     setDownloadingIndex(null)
     setIsDownloadingAll(false)
     setDownloadAllProgress(null)
-    setEmployees([])
-    setEmailMatches([])
+    setSlackMatches([])
   }, [])
 
   const handleNameChange = useCallback((pageIndex: number, name: string) => {
@@ -192,79 +185,55 @@ export default function App() {
     }
   }, [pdfData, results])
 
-  // Email flow handlers
-  const handlePrepareEmails = useCallback(async () => {
-    setIsLoadingExcel(true)
-    setError(null)
+  // Preparar envio via Slack
+  const handlePrepareSlack = useCallback(() => {
+    // Criar matches usando o mapeamento de Slack IDs
+    const matches: EmailMatch[] = results.map((result) => {
+      const slackId = result.name ? getSlackIdByName(result.name) : undefined
 
-    try {
-      const employeeList = await loadEmployeeListFromPath()
-      setEmployees(employeeList)
+      if (slackId) {
+        return {
+          pageIndex: result.pageIndex,
+          pageNumber: result.pageNumber,
+          pdfName: result.name,
+          employee: {
+            name: result.name || '',
+            email: '',
+            slackId,
+          },
+          matchScore: 100,
+          status: 'matched' as const,
+        }
+      }
 
-      // Match employees with PDF results
-      const matches = matchEmployees(results, employeeList)
-      setEmailMatches(matches)
+      return {
+        pageIndex: result.pageIndex,
+        pageNumber: result.pageNumber,
+        pdfName: result.name,
+        employee: null,
+        matchScore: 0,
+        status: result.name ? 'not_found' as const : 'no_name' as const,
+      }
+    })
 
-      setState('email_verification')
-    } catch (err) {
-      console.error('Error loading employee list:', err)
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao carregar a planilha de emails.'
-      )
-    } finally {
-      setIsLoadingExcel(false)
-    }
+    setSlackMatches(matches)
+    setState('slack_summary')
   }, [results])
 
-
-  const handleMatchUpdate = useCallback(
-    (pageIndex: number, employee: Employee | null) => {
-      setEmailMatches((prev) =>
-        prev.map((m) =>
-          m.pageIndex === pageIndex
-            ? {
-                ...m,
-                employee,
-                matchScore: employee ? 100 : 0,
-                status: employee ? 'manual' : m.status,
-              }
-            : m
-        )
-      )
-    },
-    []
-  )
-
-  const handleSlackConfirm = useCallback(() => {
-    setState('slack_summary')
-  }, [])
-
-  const handleEmailBack = useCallback(() => {
-    setState('email_verification')
-  }, [])
-
   const handleSlackBack = useCallback(() => {
-    setState('email_verification')
-  }, [])
-
-  const handleBackToResults = useCallback(() => {
     setState('ready')
-    setEmailMatches([])
+    setSlackMatches([])
   }, [])
 
   const handleExportList = useCallback(() => {
-    const validMatches = emailMatches.filter((m) => m.employee !== null)
+    const validMatches = slackMatches.filter((m) => m.employee !== null)
 
     // Create CSV content
-    const csvHeader = 'Pagina,Nome no PDF,Email,Nome na Planilha\n'
+    const csvHeader = 'Pagina,Nome,SlackId\n'
     const csvRows = validMatches
       .map(
         (m) =>
-          `${m.pageNumber},"${m.pdfName || ''}","${m.employee?.email || ''}","${
-            m.employee?.name || ''
-          }"`
+          `${m.pageNumber},"${m.pdfName || ''}","${m.employee?.slackId || ''}"`
       )
       .join('\n')
 
@@ -280,7 +249,7 @@ export default function App() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }, [emailMatches])
+  }, [slackMatches])
 
   return (
     <div className="min-h-screen bg-dark-900 text-white">
@@ -345,39 +314,17 @@ export default function App() {
             onNameChange={handleNameChange}
             onDownload={handleDownload}
             onDownloadAll={handleDownloadAll}
-            onPrepareEmails={handlePrepareEmails}
+            onPrepareSlack={handlePrepareSlack}
             downloadingIndex={downloadingIndex}
             isDownloadingAll={isDownloadingAll}
-            isLoadingEmails={isLoadingExcel}
             downloadAllProgress={downloadAllProgress}
-          />
-        )}
-
-        {/* Email Verification State */}
-        {state === 'email_verification' && (
-          <EmailVerification
-            matches={emailMatches}
-            employees={employees}
-            onMatchUpdate={handleMatchUpdate}
-            onSlackConfirm={handleSlackConfirm}
-            onCancel={handleBackToResults}
-          />
-        )}
-
-        {/* Email Summary State */}
-        {state === 'email_summary' && pdfData && (
-          <EmailSummary
-            matches={emailMatches}
-            pdfData={pdfData}
-            onBack={handleEmailBack}
-            onExportList={handleExportList}
           />
         )}
 
         {/* Slack Summary State */}
         {state === 'slack_summary' && pdfData && (
           <SlackSummary
-            matches={emailMatches}
+            matches={slackMatches}
             pdfData={pdfData}
             onBack={handleSlackBack}
             onExportList={handleExportList}
