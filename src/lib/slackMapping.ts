@@ -111,6 +111,80 @@ function normalizeName(name: string): string {
 }
 
 /**
+ * Calcula a distância de Levenshtein entre duas strings
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = []
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i]
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1]
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        )
+      }
+    }
+  }
+
+  return matrix[b.length][a.length]
+}
+
+/**
+ * Calcula a similaridade entre dois nomes (0 a 100)
+ */
+function calculateSimilarity(name1: string, name2: string): number {
+  const n1 = normalizeName(name1)
+  const n2 = normalizeName(name2)
+  const maxLen = Math.max(n1.length, n2.length)
+  if (maxLen === 0) return 100
+  const distance = levenshteinDistance(n1, n2)
+  return Math.round((1 - distance / maxLen) * 100)
+}
+
+export interface SimilarName {
+  name: string
+  slackId: string
+  similarity: number
+}
+
+/**
+ * Busca nomes similares quando não encontra match exato
+ * Retorna até 5 sugestões com similaridade >= 50%
+ */
+export function getSimilarNames(inputName: string, limit = 5): SimilarName[] {
+  const results: SimilarName[] = []
+
+  for (const [name, slackId] of Object.entries(slackIdMap)) {
+    const similarity = calculateSimilarity(inputName, name)
+    if (similarity >= 50) {
+      results.push({ name, slackId, similarity })
+    }
+  }
+
+  return results
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, limit)
+}
+
+/**
+ * Retorna todos os nomes cadastrados no sistema
+ */
+export function getAllNames(): { name: string; slackId: string }[] {
+  return Object.entries(slackIdMap).map(([name, slackId]) => ({ name, slackId }))
+}
+
+/**
  * Busca o Slack ID pelo nome do funcionário
  */
 export function getSlackIdByName(name: string): string | undefined {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { EmailMatch } from '../lib/emailMatch'
 import { extractSinglePage } from '../lib/pdfSplit'
 import { sendPdfToSlack, testSlackConnection } from '../lib/slackApi'
+import { getSimilarNames, getAllNames } from '../lib/slackMapping'
 
 interface SlackSummaryProps {
   matches: EmailMatch[]
@@ -23,10 +24,26 @@ export function SlackSummary({
   onBack,
   onExportList,
 }: SlackSummaryProps) {
-  // Só considera válido se tiver employee COM slackId
-  const validMatches = matches.filter((m) => m.employee?.slackId)
-  // Ignorados: sem employee OU sem slackId
-  const skippedMatches = matches.filter((m) => !m.employee?.slackId)
+  // Considera válido se tiver employee COM slackId OU se tiver correção manual
+  const validMatches = matches.filter((m) => m.employee?.slackId || manualMatches.has(m.pageIndex))
+  // Ignorados: sem employee OU sem slackId E sem correção manual
+  const skippedMatches = matches.filter((m) => !m.employee?.slackId && !manualMatches.has(m.pageIndex))
+
+  // Função para obter os dados do employee (original ou corrigido manualmente)
+  const getEmployeeData = (match: EmailMatch) => {
+    const manual = manualMatches.get(match.pageIndex)
+    if (manual) {
+      return { name: manual.name, email: '', slackId: manual.slackId }
+    }
+    return match.employee
+  }
+
+  // Função para aplicar correção manual
+  const handleManualMatch = (pageIndex: number, name: string, slackId: string) => {
+    setManualMatches((prev) => new Map(prev).set(pageIndex, { name, slackId }))
+    setExpandedSuggestion(null)
+    setSearchQuery('')
+  }
 
   const [sendStates, setSendStates] = useState<Map<number, SendState>>(
     new Map()
@@ -34,6 +51,11 @@ export function SlackSummary({
   const [isSendingAll, setIsSendingAll] = useState(false)
   const [slackConnected, setSlackConnected] = useState<boolean | null>(null)
   const [slackTeam, setSlackTeam] = useState<string>('')
+
+  // Estado para correções manuais de nomes
+  const [manualMatches, setManualMatches] = useState<Map<number, { name: string; slackId: string }>>(new Map())
+  const [expandedSuggestion, setExpandedSuggestion] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   // Test Slack connection on mount
   useEffect(() => {
@@ -54,7 +76,8 @@ export function SlackSummary({
   }
 
   const handleSendSlack = async (match: EmailMatch) => {
-    if (!match.employee?.slackId) return
+    const employee = getEmployeeData(match)
+    if (!employee?.slackId) return
 
     updateState(match.pageIndex, { status: 'sending' })
 
@@ -65,10 +88,10 @@ export function SlackSummary({
 
       // 2. Send via Slack using Slack ID
       const result = await sendPdfToSlack(
-        match.employee.slackId,
+        employee.slackId,
         pageData,
         fileName,
-        match.employee.name
+        employee.name
       )
 
       if (result.success) {
@@ -269,6 +292,8 @@ export function SlackSummary({
         <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
           {validMatches.map((match) => {
             const state = getState(match.pageIndex)
+            const employee = getEmployeeData(match)
+            const isManuallyMatched = manualMatches.has(match.pageIndex)
 
             return (
               <div
@@ -278,6 +303,8 @@ export function SlackSummary({
                     ? 'bg-green-500/10 border-green-500/30'
                     : state.status === 'error'
                     ? 'bg-red-500/10 border-red-500/30'
+                    : isManuallyMatched
+                    ? 'bg-blue-500/10 border-blue-500/30'
                     : 'bg-dark-700 border-dark-600'
                 }`}
               >
@@ -293,11 +320,14 @@ export function SlackSummary({
                   <div className="text-white font-medium truncate">
                     {match.pdfName || 'SEM NOME'}
                   </div>
-                  <div className="text-sm text-zinc-400 truncate">
-                    {match.employee?.name}
+                  <div className="text-sm text-zinc-400 truncate flex items-center gap-2">
+                    {employee?.name}
+                    {isManuallyMatched && (
+                      <span className="text-xs text-blue-400">(corrigido)</span>
+                    )}
                   </div>
                   <div className="text-xs text-purple-400 truncate">
-                    Slack: {match.employee?.slackId}
+                    Slack: {employee?.slackId}
                   </div>
                   {state.status === 'error' && state.error && (
                     <div className="text-xs text-red-400 mt-1 truncate">
@@ -392,29 +422,166 @@ export function SlackSummary({
         </div>
       </div>
 
-      {/* Skipped List */}
+      {/* Skipped List with Suggestions */}
       {skippedMatches.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3 text-zinc-400">
-            Ignorados (sem Slack ID)
+          <h3 className="text-lg font-semibold mb-3 text-amber-400">
+            Nomes nao encontrados ({skippedMatches.length})
           </h3>
-          <div className="bg-dark-700 rounded-xl border border-dark-600 p-4">
-            <ul className="space-y-2">
-              {skippedMatches.map((match) => (
-                <li
+          <p className="text-sm text-zinc-400 mb-4">
+            Clique em um nome para ver sugestoes de nomes similares no sistema.
+          </p>
+          <div className="space-y-2">
+            {skippedMatches.map((match) => {
+              const isExpanded = expandedSuggestion === match.pageIndex
+              const suggestions = match.pdfName ? getSimilarNames(match.pdfName) : []
+              const allNames = getAllNames()
+              const filteredNames = searchQuery
+                ? allNames.filter((n) =>
+                    n.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  )
+                : []
+
+              return (
+                <div
                   key={match.pageIndex}
-                  className="text-sm text-zinc-500 flex items-center gap-2"
+                  className="bg-dark-700 rounded-xl border border-dark-600 overflow-hidden"
                 >
-                  <span className="text-zinc-600">
-                    Pag. {match.pageNumber}:
-                  </span>
-                  <span>{match.pdfName || 'SEM NOME'}</span>
-                  {match.employee && !match.employee.slackId && (
-                    <span className="text-amber-500 text-xs">(funcionário sem Slack ID na planilha)</span>
+                  {/* Header - clickable */}
+                  <button
+                    onClick={() => {
+                      setExpandedSuggestion(isExpanded ? null : match.pageIndex)
+                      setSearchQuery('')
+                    }}
+                    className="w-full p-4 flex items-center gap-4 hover:bg-dark-600 transition-colors text-left"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                      <span className="text-sm font-mono text-amber-400">
+                        {match.pageNumber}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-white font-medium truncate">
+                        {match.pdfName || 'SEM NOME'}
+                      </div>
+                      <div className="text-xs text-amber-400">
+                        {suggestions.length > 0
+                          ? `${suggestions.length} sugestoes encontradas`
+                          : 'Clique para buscar manualmente'}
+                      </div>
+                    </div>
+                    <svg
+                      className={`w-5 h-5 text-zinc-400 transition-transform ${
+                        isExpanded ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div className="border-t border-dark-600 p-4">
+                      {/* Search box */}
+                      <div className="mb-3">
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Buscar por nome..."
+                          className="w-full px-3 py-2 bg-dark-600 border border-dark-500 rounded-lg text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-purple-500"
+                        />
+                      </div>
+
+                      {/* Suggestions */}
+                      {suggestions.length > 0 && !searchQuery && (
+                        <div className="mb-3">
+                          <div className="text-xs text-zinc-500 mb-2">
+                            Sugestoes (nomes similares):
+                          </div>
+                          <div className="space-y-1">
+                            {suggestions.map((suggestion) => (
+                              <button
+                                key={suggestion.slackId}
+                                onClick={() =>
+                                  handleManualMatch(
+                                    match.pageIndex,
+                                    suggestion.name,
+                                    suggestion.slackId
+                                  )
+                                }
+                                className="w-full px-3 py-2 bg-dark-600 hover:bg-purple-600/30 border border-dark-500 hover:border-purple-500 rounded-lg text-left transition-colors flex items-center justify-between"
+                              >
+                                <span className="text-sm text-white truncate">
+                                  {suggestion.name}
+                                </span>
+                                <span className="text-xs text-green-400 flex-shrink-0 ml-2">
+                                  {suggestion.similarity}% similar
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Search results */}
+                      {searchQuery && (
+                        <div>
+                          <div className="text-xs text-zinc-500 mb-2">
+                            Resultados da busca ({filteredNames.length}):
+                          </div>
+                          {filteredNames.length > 0 ? (
+                            <div className="space-y-1 max-h-48 overflow-y-auto">
+                              {filteredNames.slice(0, 10).map((item) => (
+                                <button
+                                  key={item.slackId}
+                                  onClick={() =>
+                                    handleManualMatch(
+                                      match.pageIndex,
+                                      item.name,
+                                      item.slackId
+                                    )
+                                  }
+                                  className="w-full px-3 py-2 bg-dark-600 hover:bg-purple-600/30 border border-dark-500 hover:border-purple-500 rounded-lg text-left transition-colors"
+                                >
+                                  <span className="text-sm text-white">
+                                    {item.name}
+                                  </span>
+                                </button>
+                              ))}
+                              {filteredNames.length > 10 && (
+                                <div className="text-xs text-zinc-500 text-center py-2">
+                                  +{filteredNames.length - 10} resultados...
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-zinc-500 text-center py-4">
+                              Nenhum resultado encontrado
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* No suggestions and no search */}
+                      {suggestions.length === 0 && !searchQuery && (
+                        <div className="text-sm text-zinc-500 text-center py-2">
+                          Nenhuma sugestao automatica. Use a busca acima.
+                        </div>
+                      )}
+                    </div>
                   )}
-                </li>
-              ))}
-            </ul>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
