@@ -1,5 +1,6 @@
 import { Employee } from './excel'
 import { PageResult } from '../components/ResultItem'
+import { getSlackIdByName } from './slackMapping'
 
 export interface EmailMatch {
   pageIndex: number
@@ -86,6 +87,7 @@ function findBestMatch(
 
 /**
  * Match PDF results with employee list
+ * Também busca Slack ID no mapeamento fixo (slackMapping.ts)
  */
 export function matchEmployees(
   results: PageResult[],
@@ -103,15 +105,39 @@ export function matchEmployees(
       }
     }
 
+    // Busca Slack ID no mapeamento fixo pelo nome do PDF
+    const slackIdFromMap = getSlackIdByName(result.name)
+
     const match = findBestMatch(result.name, employees)
 
     if (match) {
+      // Se encontrou na planilha, usa o slackId do mapeamento se não tiver na planilha
+      const employee = {
+        ...match.employee,
+        slackId: match.employee.slackId || slackIdFromMap,
+      }
       return {
         pageIndex: result.pageIndex,
         pageNumber: result.pageNumber,
         pdfName: result.name,
-        employee: match.employee,
+        employee,
         matchScore: match.score,
+        status: 'matched' as const,
+      }
+    }
+
+    // Se não encontrou na planilha mas tem no mapeamento, cria um employee básico
+    if (slackIdFromMap) {
+      return {
+        pageIndex: result.pageIndex,
+        pageNumber: result.pageNumber,
+        pdfName: result.name,
+        employee: {
+          name: result.name,
+          email: '',
+          slackId: slackIdFromMap,
+        },
+        matchScore: 100,
         status: 'matched' as const,
       }
     }

@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx'
 export interface Employee {
   name: string
   email: string
+  slackId?: string
 }
 
 /**
@@ -64,15 +65,24 @@ function parseEmployeeList(arrayBuffer: ArrayBuffer): Employee[] {
       k.toLowerCase() === 'mail'
   )
 
+  const slackIdKey = keys.find(
+    (k) =>
+      k.toLowerCase() === 'slackid' ||
+      k.toLowerCase() === 'slack_id' ||
+      k.toLowerCase() === 'slack id' ||
+      k.toLowerCase() === 'slack'
+  )
+
   if (!nameKey) {
     throw new Error(
       'Coluna de nome não encontrada. Use "Nome", "Name", "Funcionario" ou "Colaborador"'
     )
   }
 
-  if (!emailKey) {
+  // Email é opcional se tiver Slack ID
+  if (!emailKey && !slackIdKey) {
     throw new Error(
-      'Coluna de email não encontrada. Use "Email", "E-mail" ou "Mail"'
+      'Coluna de email ou Slack ID não encontrada. Use "Email", "SlackId" ou "Slack"'
     )
   }
 
@@ -81,10 +91,12 @@ function parseEmployeeList(arrayBuffer: ArrayBuffer): Employee[] {
 
   for (const row of data) {
     const name = String(row[nameKey] || '').trim()
-    const email = String(row[emailKey] || '').trim()
+    const email = emailKey ? String(row[emailKey] || '').trim() : ''
+    const slackId = slackIdKey ? String(row[slackIdKey] || '').trim() : undefined
 
-    if (name && email) {
-      employees.push({ name, email })
+    // Precisa ter nome e pelo menos email ou slackId
+    if (name && (email || slackId)) {
+      employees.push({ name, email, slackId })
     }
   }
 

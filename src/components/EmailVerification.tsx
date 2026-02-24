@@ -7,6 +7,7 @@ interface EmailVerificationProps {
   employees: Employee[]
   onMatchUpdate: (pageIndex: number, employee: Employee | null) => void
   onConfirm: () => void
+  onSlackConfirm: () => void
   onCancel: () => void
 }
 
@@ -15,6 +16,7 @@ export function EmailVerification({
   employees,
   onMatchUpdate,
   onConfirm,
+  onSlackConfirm,
   onCancel,
 }: EmailVerificationProps) {
   const stats = getMatchStats(matches)
@@ -255,9 +257,32 @@ export function EmailVerification({
           <button
             onClick={onConfirm}
             disabled={!canConfirm}
-            className="px-5 py-2.5 text-sm font-medium bg-accent hover:bg-accent/90 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-5 py-2.5 text-sm font-medium bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Confirmar e Preparar Envio
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+            Enviar por Email
+          </button>
+          <button
+            onClick={onSlackConfirm}
+            disabled={!canConfirm}
+            className="px-5 py-2.5 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" />
+            </svg>
+            Enviar via Slack
           </button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { ResultsList } from './components/ResultsList'
 import { PageResult } from './components/ResultItem'
 import { EmailVerification } from './components/EmailVerification'
 import { EmailSummary } from './components/EmailSummary'
+import { SlackSummary } from './components/SlackSummary'
 import { extractTextFromPDF } from './lib/pdfText'
 import { extractSinglePage, downloadPDF } from './lib/pdfSplit'
 import { extractEmployeeName } from './lib/nameExtract'
@@ -20,6 +21,7 @@ type AppState =
   | 'ready'
   | 'email_verification'
   | 'email_summary'
+  | 'slack_summary'
   | 'error'
 
 interface Progress {
@@ -239,7 +241,15 @@ export default function App() {
     setState('email_summary')
   }, [])
 
+  const handleSlackConfirm = useCallback(() => {
+    setState('slack_summary')
+  }, [])
+
   const handleEmailBack = useCallback(() => {
+    setState('email_verification')
+  }, [])
+
+  const handleSlackBack = useCallback(() => {
     setState('email_verification')
   }, [])
 
@@ -354,6 +364,7 @@ export default function App() {
             employees={employees}
             onMatchUpdate={handleMatchUpdate}
             onConfirm={handleEmailConfirm}
+            onSlackConfirm={handleSlackConfirm}
             onCancel={handleBackToResults}
           />
         )}
@@ -364,6 +375,16 @@ export default function App() {
             matches={emailMatches}
             pdfData={pdfData}
             onBack={handleEmailBack}
+            onExportList={handleExportList}
+          />
+        )}
+
+        {/* Slack Summary State */}
+        {state === 'slack_summary' && pdfData && (
+          <SlackSummary
+            matches={emailMatches}
+            pdfData={pdfData}
+            onBack={handleSlackBack}
             onExportList={handleExportList}
           />
         )}
