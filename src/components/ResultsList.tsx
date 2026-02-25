@@ -27,17 +27,21 @@ export function ResultsList({
   return (
     <div className="w-full max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-sage-200">
         <div>
-          <h2 className="text-xl font-semibold text-white">
-            {results.length} holerites encontrados
-          </h2>
-          <p className="text-sm text-zinc-500 mt-1">
-            {okCount} identificados automaticamente
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-leaf" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h2 className="text-xl font-semibold text-sage-800">
+              {results.length} holerites encontrados
+            </h2>
+          </div>
+          <p className="text-sm text-sage-500 mt-1 ml-7">
+            <span className="text-leaf font-medium">{okCount}</span> identificados automaticamente
             {needsReviewCount > 0 && (
-              <span className="text-amber-400">
-                {' '}
-                | {needsReviewCount} para revisar
+              <span className="text-amber-600 font-medium">
+                {' '}| {needsReviewCount} para revisar
               </span>
             )}
           </p>
@@ -47,7 +51,7 @@ export function ResultsList({
           {onPrepareSlack && (
             <button
               onClick={onPrepareSlack}
-              className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#4A154B] to-[#611f69] hover:from-[#611f69] hover:to-[#7c2d7e] text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313z" />
@@ -59,7 +63,7 @@ export function ResultsList({
           <button
             onClick={onDownloadAll}
             disabled={isDownloadingAll}
-            className="flex items-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-white font-medium rounded-xl transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-leaf to-leaf-dark hover:from-leaf-dark hover:to-sage-800 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50"
           >
             {isDownloadingAll ? (
               <>

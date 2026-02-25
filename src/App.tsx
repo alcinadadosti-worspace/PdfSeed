@@ -252,14 +252,14 @@ export default function App() {
   }, [slackMatches])
 
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="min-h-screen text-sage-800">
       <TopBar hasFile={state !== 'idle'} onClear={handleClear} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 pb-20">
         {/* Error Message */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="max-w-2xl mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
         )}
 
@@ -273,31 +273,26 @@ export default function App() {
         {/* Processing State */}
         {state === 'processing' && progress && (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-sage-200 shadow-lg">
               <div className="text-center mb-6">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/20 flex items-center justify-center">
+                <div className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-gradient-to-br from-leaf-muted/30 to-leaf/20 flex items-center justify-center">
+                  {/* Animated leaf/seedling */}
                   <svg
-                    className="w-8 h-8 text-accent animate-spin"
+                    className="w-10 h-10 text-leaf animate-pulse"
                     fill="none"
                     viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
                     <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M12 21V11m0 0c0-3.5 3-6 6-6.5-1 4-3 5.5-6 6.5zm0 0c0-3.5-3-6-6-6.5 1 4 3 5.5 6 6.5z"
                     />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Processando...</h2>
-                <p className="text-zinc-400">{progress.label}</p>
+                <h2 className="text-xl font-semibold mb-2 text-sage-800">Processando...</h2>
+                <p className="text-sage-500">{progress.label}</p>
               </div>
               <ProgressBar
                 current={progress.current}
@@ -334,10 +329,10 @@ export default function App() {
         {/* Error State */}
         {state === 'error' && (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-500/20 flex items-center justify-center">
+            <div className="text-center p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-sage-200 shadow-lg">
+              <div className="w-20 h-20 mx-auto mb-5 rounded-3xl bg-red-50 flex items-center justify-center">
                 <svg
-                  className="w-8 h-8 text-red-400"
+                  className="w-10 h-10 text-red-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -345,18 +340,18 @@ export default function App() {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold mb-2">Ocorreu um erro</h2>
-              <p className="text-zinc-400 mb-6">
-                Não foi possível processar o arquivo.
+              <h2 className="text-xl font-semibold mb-2 text-sage-800">Ocorreu um erro</h2>
+              <p className="text-sage-500 mb-6">
+                Nao foi possivel processar o arquivo.
               </p>
               <button
                 onClick={handleClear}
-                className="px-6 py-3 bg-dark-700 hover:bg-dark-600 rounded-xl transition-colors"
+                className="px-6 py-3 bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-xl transition-colors border border-sage-200"
               >
                 Tentar novamente
               </button>
@@ -366,8 +361,13 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 py-4 text-center text-xs text-zinc-600 bg-dark-900/80 backdrop-blur">
-        Seus arquivos nunca saem do navegador. Processamento 100% local.
+      <footer className="fixed bottom-0 left-0 right-0 py-4 text-center text-xs text-sage-500 bg-cream-50/90 backdrop-blur-sm border-t border-sage-200">
+        <div className="flex items-center justify-center gap-2">
+          <svg className="w-4 h-4 text-leaf" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Seus arquivos nunca saem do navegador. Processamento 100% local.
+        </div>
       </footer>
     </div>
   )

@@ -49,10 +49,10 @@ export function ResultItem({
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-dark-700 rounded-xl border border-dark-600 hover:border-dark-500 transition-colors">
+    <div className="flex items-center gap-4 p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-sage-200 hover:border-leaf-muted hover:shadow-md transition-all duration-200">
       {/* Page Number */}
-      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-dark-600 flex items-center justify-center">
-        <span className="text-sm font-mono text-zinc-400">
+      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-sage-100 flex items-center justify-center">
+        <span className="text-sm font-mono text-sage-600 font-medium">
           {result.pageNumber}
         </span>
       </div>
@@ -67,12 +67,12 @@ export function ResultItem({
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
             autoFocus
-            className="w-full px-3 py-1.5 bg-dark-800 border border-dark-500 rounded-lg text-white text-sm focus:outline-none focus:border-accent"
+            className="w-full px-3 py-1.5 bg-cream-100 border border-sage-300 rounded-xl text-sage-800 text-sm focus:outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
           />
         ) : (
           <div className="flex items-center gap-2">
             <span
-              className="text-white font-medium truncate cursor-pointer hover:text-accent"
+              className="text-sage-800 font-medium truncate cursor-pointer hover:text-leaf"
               onClick={handleEdit}
               title="Clique para editar"
             >
@@ -80,7 +80,7 @@ export function ResultItem({
             </span>
             <button
               onClick={handleEdit}
-              className="flex-shrink-0 p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="flex-shrink-0 p-1 text-sage-400 hover:text-leaf transition-colors"
               title="Editar nome"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,17 +94,20 @@ export function ResultItem({
             </button>
           </div>
         )}
-        <p className="text-xs text-zinc-500 mt-0.5">{displayName}.pdf</p>
+        <p className="text-xs text-sage-500 mt-0.5">{displayName}.pdf</p>
       </div>
 
       {/* Status Badge */}
       <div className="flex-shrink-0">
         {needsReview ? (
-          <span className="px-2.5 py-1 text-xs font-medium bg-amber-500/20 text-amber-400 rounded-full">
+          <span className="px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-700 rounded-full border border-amber-200">
             Revisar
           </span>
         ) : (
-          <span className="px-2.5 py-1 text-xs font-medium bg-green-500/20 text-green-400 rounded-full">
+          <span className="px-3 py-1.5 text-xs font-medium bg-leaf/10 text-leaf-dark rounded-full border border-leaf/20 flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
             OK
           </span>
         )}
@@ -114,11 +117,11 @@ export function ResultItem({
       <button
         onClick={() => onDownload(result.pageIndex, displayName)}
         disabled={isDownloading}
-        className="flex-shrink-0 px-4 py-2 text-sm font-medium bg-dark-600 hover:bg-dark-500 text-white rounded-lg transition-colors disabled:opacity-50"
+        className="flex-shrink-0 px-4 py-2 text-sm font-medium bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-xl transition-colors disabled:opacity-50 border border-sage-200"
       >
         {isDownloading ? (
           <svg
-            className="w-4 h-4 animate-spin"
+            className="w-4 h-4 animate-spin text-leaf"
             fill="none"
             viewBox="0 0 24 24"
           >

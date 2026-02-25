@@ -137,33 +137,35 @@ export function SlackSummary({
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2 flex items-center gap-3">
-          <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
-          </svg>
+      <div className="mb-6 p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-sage-200">
+        <h2 className="text-2xl font-bold mb-2 flex items-center gap-3 text-sage-800">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#4A154B] to-[#611f69] flex items-center justify-center shadow-md">
+            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z" />
+            </svg>
+          </div>
           Enviar via Slack
         </h2>
-        <p className="text-zinc-400">
-          Os holerites serão enviados diretamente via DM no Slack.
+        <p className="text-sage-500 ml-[52px]">
+          Os holerites serao enviados diretamente via DM no Slack.
         </p>
       </div>
 
       {/* Slack Connection Status */}
       <div
-        className={`mb-6 p-4 rounded-xl border ${
+        className={`mb-6 p-4 rounded-2xl border backdrop-blur-sm ${
           slackConnected === null
-            ? 'bg-zinc-500/10 border-zinc-500/30'
+            ? 'bg-sage-100/60 border-sage-300'
             : slackConnected
-            ? 'bg-green-500/10 border-green-500/30'
-            : 'bg-red-500/10 border-red-500/30'
+            ? 'bg-leaf/10 border-leaf/30'
+            : 'bg-red-50 border-red-200'
         }`}
       >
         <div className="flex items-center gap-3">
           {slackConnected === null ? (
             <>
               <svg
-                className="w-5 h-5 text-zinc-400 animate-spin"
+                className="w-5 h-5 text-sage-500 animate-spin"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -181,44 +183,48 @@ export function SlackSummary({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              <span className="text-zinc-400">Verificando conexão...</span>
+              <span className="text-sage-600">Verificando conexao...</span>
             </>
           ) : slackConnected ? (
             <>
-              <svg
-                className="w-5 h-5 text-green-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <span className="text-green-400">
+              <div className="w-8 h-8 rounded-full bg-leaf/20 flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-leaf-dark"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <span className="text-leaf-dark font-medium">
                 Conectado ao Slack{slackTeam && `: ${slackTeam}`}
               </span>
             </>
           ) : (
             <>
-              <svg
-                className="w-5 h-5 text-red-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-              <span className="text-red-400">
-                Slack não conectado. Verifique o servidor e o token.
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-red-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <span className="text-red-600 font-medium">
+                Slack nao conectado. Verifique o servidor e o token.
               </span>
             </>
           )}
@@ -227,37 +233,37 @@ export function SlackSummary({
 
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="p-4 bg-dark-700 rounded-xl border border-dark-600">
-          <div className="text-3xl font-bold text-white">
+        <div className="p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-sage-200 shadow-sm">
+          <div className="text-3xl font-bold text-sage-800">
             {validMatches.length}
           </div>
-          <div className="text-sm text-zinc-400">Total</div>
+          <div className="text-sm text-sage-500">Total</div>
         </div>
-        <div className="p-4 bg-dark-700 rounded-xl border border-green-500/30">
-          <div className="text-3xl font-bold text-green-400">{sentCount}</div>
-          <div className="text-sm text-zinc-400">Enviados</div>
+        <div className="p-4 bg-leaf/10 backdrop-blur-sm rounded-2xl border border-leaf/30 shadow-sm">
+          <div className="text-3xl font-bold text-leaf-dark">{sentCount}</div>
+          <div className="text-sm text-sage-500">Enviados</div>
         </div>
-        <div className="p-4 bg-dark-700 rounded-xl border border-red-500/30">
-          <div className="text-3xl font-bold text-red-400">{errorCount}</div>
-          <div className="text-sm text-zinc-400">Erros</div>
+        <div className="p-4 bg-red-50 backdrop-blur-sm rounded-2xl border border-red-200 shadow-sm">
+          <div className="text-3xl font-bold text-red-500">{errorCount}</div>
+          <div className="text-sm text-sage-500">Erros</div>
         </div>
-        <div className="p-4 bg-dark-700 rounded-xl border border-amber-500/30">
-          <div className="text-3xl font-bold text-amber-400">
+        <div className="p-4 bg-amber-50 backdrop-blur-sm rounded-2xl border border-amber-200 shadow-sm">
+          <div className="text-3xl font-bold text-amber-600">
             {remainingCount}
           </div>
-          <div className="text-sm text-zinc-400">Restantes</div>
+          <div className="text-sm text-sage-500">Restantes</div>
         </div>
       </div>
 
       {/* Send List */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold">Lista de Envio</h3>
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="text-lg font-semibold text-sage-800">Lista de Envio</h3>
           {remainingCount > 0 && slackConnected && (
             <button
               onClick={handleSendAll}
               disabled={isSendingAll}
-              className="px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#4A154B] to-[#611f69] hover:from-[#611f69] hover:to-[#7c2d7e] text-white rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 flex items-center gap-2"
             >
               {isSendingAll ? (
                 <>
@@ -297,39 +303,39 @@ export function SlackSummary({
             return (
               <div
                 key={match.pageIndex}
-                className={`flex items-center gap-4 p-4 rounded-xl border transition-colors ${
+                className={`flex items-center gap-4 p-4 rounded-2xl border transition-all backdrop-blur-sm ${
                   state.status === 'sent'
-                    ? 'bg-green-500/10 border-green-500/30'
+                    ? 'bg-leaf/10 border-leaf/30'
                     : state.status === 'error'
-                    ? 'bg-red-500/10 border-red-500/30'
+                    ? 'bg-red-50 border-red-200'
                     : isManuallyMatched
-                    ? 'bg-blue-500/10 border-blue-500/30'
-                    : 'bg-dark-700 border-dark-600'
+                    ? 'bg-blue-50 border-blue-200'
+                    : 'bg-white/70 border-sage-200'
                 }`}
               >
                 {/* Page Number */}
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-dark-600 flex items-center justify-center">
-                  <span className="text-sm font-mono text-zinc-400">
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-sage-100 flex items-center justify-center">
+                  <span className="text-sm font-mono text-sage-600 font-medium">
                     {match.pageNumber}
                   </span>
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="text-white font-medium truncate">
+                  <div className="text-sage-800 font-medium truncate">
                     {match.pdfName || 'SEM NOME'}
                   </div>
-                  <div className="text-sm text-zinc-400 truncate flex items-center gap-2">
+                  <div className="text-sm text-sage-500 truncate flex items-center gap-2">
                     {employee?.name}
                     {isManuallyMatched && (
-                      <span className="text-xs text-blue-400">(corrigido)</span>
+                      <span className="text-xs text-blue-500 font-medium">(corrigido)</span>
                     )}
                   </div>
-                  <div className="text-xs text-purple-400 truncate">
+                  <div className="text-xs text-[#611f69] truncate">
                     Slack: {employee?.slackId}
                   </div>
                   {state.status === 'error' && state.error && (
-                    <div className="text-xs text-red-400 mt-1 truncate">
+                    <div className="text-xs text-red-500 mt-1 truncate">
                       {state.error}
                     </div>
                   )}
@@ -338,7 +344,7 @@ export function SlackSummary({
                 {/* Status/Action */}
                 <div className="flex-shrink-0">
                   {state.status === 'sent' ? (
-                    <span className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-green-400">
+                    <span className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-leaf-dark">
                       <svg
                         className="w-5 h-5"
                         fill="none"
@@ -355,7 +361,7 @@ export function SlackSummary({
                       Enviado
                     </span>
                   ) : state.status === 'sending' ? (
-                    <span className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-400">
+                    <span className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[#611f69]">
                       <svg
                         className="w-4 h-4 animate-spin"
                         fill="none"
@@ -381,7 +387,7 @@ export function SlackSummary({
                     <button
                       onClick={() => handleSendSlack(match)}
                       disabled={!slackConnected || isSendingAll}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors disabled:opacity-50"
                     >
                       <svg
                         className="w-4 h-4"
@@ -402,7 +408,7 @@ export function SlackSummary({
                     <button
                       onClick={() => handleSendSlack(match)}
                       disabled={!slackConnected || isSendingAll}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-[#4A154B] to-[#611f69] hover:from-[#611f69] hover:to-[#7c2d7e] text-white rounded-xl transition-all shadow-sm hover:shadow-md disabled:opacity-50"
                     >
                       <svg
                         className="w-4 h-4"
@@ -424,10 +430,13 @@ export function SlackSummary({
       {/* Skipped List with Suggestions */}
       {skippedMatches.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3 text-amber-400">
+          <h3 className="text-lg font-semibold mb-3 text-amber-600 flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
             Nomes nao encontrados ({skippedMatches.length})
           </h3>
-          <p className="text-sm text-zinc-400 mb-4">
+          <p className="text-sm text-sage-500 mb-4">
             Clique em um nome para ver sugestoes de nomes similares no sistema.
           </p>
           <div className="space-y-2">
@@ -444,7 +453,7 @@ export function SlackSummary({
               return (
                 <div
                   key={match.pageIndex}
-                  className="bg-dark-700 rounded-xl border border-dark-600 overflow-hidden"
+                  className="bg-white/70 backdrop-blur-sm rounded-2xl border border-sage-200 overflow-hidden"
                 >
                   {/* Header - clickable */}
                   <button
@@ -452,25 +461,25 @@ export function SlackSummary({
                       setExpandedSuggestion(isExpanded ? null : match.pageIndex)
                       setSearchQuery('')
                     }}
-                    className="w-full p-4 flex items-center gap-4 hover:bg-dark-600 transition-colors text-left"
+                    className="w-full p-4 flex items-center gap-4 hover:bg-sage-50 transition-colors text-left"
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                      <span className="text-sm font-mono text-amber-400">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                      <span className="text-sm font-mono text-amber-600 font-medium">
                         {match.pageNumber}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-white font-medium truncate">
+                      <div className="text-sage-800 font-medium truncate">
                         {match.pdfName || 'SEM NOME'}
                       </div>
-                      <div className="text-xs text-amber-400">
+                      <div className="text-xs text-amber-600">
                         {suggestions.length > 0
                           ? `${suggestions.length} sugestoes encontradas`
                           : 'Clique para buscar manualmente'}
                       </div>
                     </div>
                     <svg
-                      className={`w-5 h-5 text-zinc-400 transition-transform ${
+                      className={`w-5 h-5 text-sage-400 transition-transform ${
                         isExpanded ? 'rotate-180' : ''
                       }`}
                       fill="none"
@@ -488,7 +497,7 @@ export function SlackSummary({
 
                   {/* Expanded content */}
                   {isExpanded && (
-                    <div className="border-t border-dark-600 p-4">
+                    <div className="border-t border-sage-200 p-4 bg-cream-50">
                       {/* Search box */}
                       <div className="mb-3">
                         <input
@@ -496,14 +505,14 @@ export function SlackSummary({
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Buscar por nome..."
-                          className="w-full px-3 py-2 bg-dark-600 border border-dark-500 rounded-lg text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-purple-500"
+                          className="w-full px-4 py-2.5 bg-white border border-sage-300 rounded-xl text-sage-800 placeholder-sage-400 text-sm focus:outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
                         />
                       </div>
 
                       {/* Suggestions */}
                       {suggestions.length > 0 && !searchQuery && (
                         <div className="mb-3">
-                          <div className="text-xs text-zinc-500 mb-2">
+                          <div className="text-xs text-sage-500 mb-2 font-medium">
                             Sugestoes (nomes similares):
                           </div>
                           <div className="space-y-1">
@@ -517,12 +526,12 @@ export function SlackSummary({
                                     suggestion.slackId
                                   )
                                 }
-                                className="w-full px-3 py-2 bg-dark-600 hover:bg-purple-600/30 border border-dark-500 hover:border-purple-500 rounded-lg text-left transition-colors flex items-center justify-between"
+                                className="w-full px-4 py-2.5 bg-white hover:bg-leaf/10 border border-sage-200 hover:border-leaf rounded-xl text-left transition-all flex items-center justify-between"
                               >
-                                <span className="text-sm text-white truncate">
+                                <span className="text-sm text-sage-800 truncate">
                                   {suggestion.name}
                                 </span>
-                                <span className="text-xs text-green-400 flex-shrink-0 ml-2">
+                                <span className="text-xs text-leaf-dark font-medium flex-shrink-0 ml-2 bg-leaf/10 px-2 py-0.5 rounded-full">
                                   {suggestion.similarity}% similar
                                 </span>
                               </button>
@@ -534,7 +543,7 @@ export function SlackSummary({
                       {/* Search results */}
                       {searchQuery && (
                         <div>
-                          <div className="text-xs text-zinc-500 mb-2">
+                          <div className="text-xs text-sage-500 mb-2 font-medium">
                             Resultados da busca ({filteredNames.length}):
                           </div>
                           {filteredNames.length > 0 ? (
@@ -549,21 +558,21 @@ export function SlackSummary({
                                       item.slackId
                                     )
                                   }
-                                  className="w-full px-3 py-2 bg-dark-600 hover:bg-purple-600/30 border border-dark-500 hover:border-purple-500 rounded-lg text-left transition-colors"
+                                  className="w-full px-4 py-2.5 bg-white hover:bg-leaf/10 border border-sage-200 hover:border-leaf rounded-xl text-left transition-all"
                                 >
-                                  <span className="text-sm text-white">
+                                  <span className="text-sm text-sage-800">
                                     {item.name}
                                   </span>
                                 </button>
                               ))}
                               {filteredNames.length > 10 && (
-                                <div className="text-xs text-zinc-500 text-center py-2">
+                                <div className="text-xs text-sage-500 text-center py-2">
                                   +{filteredNames.length - 10} resultados...
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <div className="text-sm text-zinc-500 text-center py-4">
+                            <div className="text-sm text-sage-500 text-center py-4">
                               Nenhum resultado encontrado
                             </div>
                           )}
@@ -572,7 +581,7 @@ export function SlackSummary({
 
                       {/* No suggestions and no search */}
                       {suggestions.length === 0 && !searchQuery && (
-                        <div className="text-sm text-zinc-500 text-center py-2">
+                        <div className="text-sm text-sage-500 text-center py-2">
                           Nenhuma sugestao automatica. Use a busca acima.
                         </div>
                       )}
@@ -586,16 +595,16 @@ export function SlackSummary({
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-between p-4 bg-dark-800 rounded-xl border border-dark-600">
+      <div className="flex items-center justify-between p-5 bg-white/60 backdrop-blur-sm rounded-2xl border border-sage-200">
         <button
           onClick={onBack}
-          className="px-5 py-2.5 text-sm font-medium bg-dark-600 hover:bg-dark-500 text-white rounded-lg transition-colors"
+          className="px-5 py-2.5 text-sm font-medium bg-sage-100 hover:bg-sage-200 text-sage-700 rounded-xl transition-colors border border-sage-200"
         >
           Voltar
         </button>
         <button
           onClick={onExportList}
-          className="px-5 py-2.5 text-sm font-medium bg-dark-600 hover:bg-dark-500 text-white rounded-lg transition-colors flex items-center gap-2"
+          className="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-leaf to-leaf-dark hover:from-leaf-dark hover:to-sage-800 text-white rounded-xl transition-all shadow-md hover:shadow-lg flex items-center gap-2"
         >
           <svg
             className="w-4 h-4"

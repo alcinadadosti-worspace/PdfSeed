@@ -7,7 +7,7 @@
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -16,35 +16,41 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #0a0a0b;
+  background: linear-gradient(135deg, #fefef9 0%, #f6f9f6 50%, #e8f0e8 100%);
+  min-height: 100vh;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - tema natureza */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #141416;
+  background: #f5f2dc;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #b8d4b8;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #94bd94;
 }
 
-/* Focus styles */
+/* Focus styles - verde folha */
 *:focus-visible {
-  outline: 2px solid #8b5cf6;
+  outline: 2px solid #5a9a5a;
   outline-offset: 2px;
 }
 
-/* Selection */
+/* Selection - verde suave */
 ::selection {
-  background-color: rgba(139, 92, 246, 0.3);
+  background-color: rgba(90, 154, 90, 0.25);
+}
+
+/* Subtle leaf pattern overlay */
+.leaf-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 5c-5 8-15 12-15 20s10 15 15 25c5-10 15-17 15-25S35 13 30 5z' fill='%235a9a5a' fill-opacity='0.03'/%3E%3C/svg%3E");
 }
