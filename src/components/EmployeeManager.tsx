@@ -54,7 +54,6 @@ export function EmployeeManager({
 }: EmployeeManagerProps) {
   const [name, setName] = useState('')
   const [slackId, setSlackId] = useState('')
-  const [adminPassword, setAdminPassword] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [search, setSearch] = useState('')
@@ -82,7 +81,7 @@ export function EmployeeManager({
     }
     setIsSaving(true)
     setFeedback(null)
-    const result = await onAdd(name, slackId, adminPassword || undefined)
+    const result = await onAdd(name, slackId)
     setIsSaving(false)
     if (result.success) {
       const extra = result.verifiedName ? ` (Slack: ${result.verifiedName})` : ''
@@ -118,12 +117,7 @@ export function EmployeeManager({
       return
     }
     setBusyKey(oldName)
-    const result = await onUpdate(
-      oldName,
-      editName,
-      editSlackId,
-      adminPassword || undefined
-    )
+    const result = await onUpdate(oldName, editName, editSlackId)
     setBusyKey(null)
     if (result.success) {
       const extra = result.verifiedName ? ` (Slack: ${result.verifiedName})` : ''
@@ -142,7 +136,7 @@ export function EmployeeManager({
   const handleRemove = async (emp: Employee) => {
     if (!window.confirm(`Remover "${emp.name}" da lista?`)) return
     setBusyKey(emp.name)
-    const result = await onRemove(emp.name, adminPassword || undefined)
+    const result = await onRemove(emp.name)
     setBusyKey(null)
     if (result.success) {
       setFeedback({ type: 'success', message: `"${emp.name}" removido.` })
@@ -241,19 +235,7 @@ export function EmployeeManager({
                 />
               </div>
             </div>
-            <div className="mt-3 flex flex-col sm:flex-row sm:items-end gap-3">
-              <div className="flex-1">
-                <label className="block text-xs font-medium text-sage-600 mb-1">
-                  Senha (se necessário)
-                </label>
-                <input
-                  type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="Deixe em branco se não usar"
-                  className="w-full px-4 py-2.5 bg-white border border-sage-300 rounded-xl text-sage-800 placeholder-sage-400 text-sm focus:outline-none focus:border-leaf focus:ring-2 focus:ring-leaf/20"
-                />
-              </div>
+            <div className="mt-3 flex justify-end">
               <button
                 type="submit"
                 disabled={isSaving || !configured}
