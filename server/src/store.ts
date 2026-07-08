@@ -143,6 +143,27 @@ export async function addEmployee(name: string, slackId: string): Promise<Employ
 }
 
 /**
+ * Edita um funcionário: renomeia (troca a chave) e/ou muda o Slack ID.
+ */
+export async function updateEmployee(
+  oldName: string,
+  newName: string,
+  slackId: string
+): Promise<EmployeeMap> {
+  const { map, sha } = await fetchFromGitHub()
+  const oldKey = normalizeName(oldName)
+  const newKey = normalizeName(newName)
+  const next = { ...map }
+  if (oldKey !== newKey) {
+    delete next[oldKey]
+  }
+  next[newKey] = slackId.trim()
+  const newSha = await commitToGitHub(next, sha, `chore: editar ${newKey}`)
+  cache = { map: next, sha: newSha, fetchedAt: Date.now() }
+  return next
+}
+
+/**
  * Remove um funcionário e commita no GitHub.
  */
 export async function removeEmployee(name: string): Promise<EmployeeMap> {

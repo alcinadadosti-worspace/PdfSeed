@@ -7,6 +7,7 @@ import { sendPdfToUser, testSlackConnection, getSlackUserName } from './slack.js
 import {
   getEmployees,
   addEmployee,
+  updateEmployee,
   removeEmployee,
   isConfigured as isStoreConfigured,
 } from './store.js'
@@ -166,6 +167,48 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
 const NAME_RE = /^[A-Za-zÀ-ÿ\s]{2,80}$/
 const SLACK_ID_RE = /^[UW][A-Z0-9]{7,14}$/
 
+type Validated =
+  | { ok: false; error: string }
+  | { ok: true; cleanName: string; cleanId: string }
+
+function validateNameId(name?: string, slackId?: string): Validated {
+  if (!name || !slackId) {
+    return { ok: false, error: 'Campos obrigatórios: name, slackId' }
+  }
+  const cleanName = name.replace(/\s+/g, ' ').trim()
+  const cleanId = slackId.trim().toUpperCase()
+  if (!NAME_RE.test(cleanName)) {
+    return { ok: false, error: 'Nome inválido. Use apenas letras e espaços.' }
+  }
+  if (!SLACK_ID_RE.test(cleanId)) {
+    return {
+      ok: false,
+      error:
+        'Slack ID inválido. Deve começar com U e conter letras/números (ex.: U07KXEJU338).',
+    }
+  }
+  return { ok: true, cleanName, cleanId }
+}
+
+// Confirma o ID no Slack (best-effort): 'reject' se claramente não existir.
+async function verifySlackId(
+  cleanId: string
+): Promise<{ reject?: string; verifiedName?: string; warning?: string }> {
+  const check = await getSlackUserName(cleanId)
+  if (check.ok) {
+    return { verifiedName: check.name }
+  }
+  if (
+    check.error &&
+    /user_not_found|invalid_user|invalid_arguments/i.test(check.error)
+  ) {
+    return { reject: 'Esse Slack ID não existe no seu workspace. Confira o ID.' }
+  }
+  return {
+    warning: 'não foi possível confirmar o ID no Slack (verifique manualmente).',
+  }
+}
+
 // Lista os funcionários cadastrados pela app
 app.get('/api/employees', async (_req, res) => {
   if (!isStoreConfigured()) {
@@ -182,30 +225,13 @@ app.get('/api/employees', async (_req, res) => {
   }
 })
 
-// Cadastra (ou atualiza) um funcionário
+// Cadastra um funcionário
 app.post('/api/employees', requireAdmin, async (req, res) => {
   const { name, slackId } = req.body as { name?: string; slackId?: string }
 
-  if (!name || !slackId) {
-    res.status(400).json({ success: false, error: 'Campos obrigatórios: name, slackId' })
-    return
-  }
-
-  const cleanName = name.replace(/\s+/g, ' ').trim()
-  const cleanId = slackId.trim().toUpperCase()
-
-  if (!NAME_RE.test(cleanName)) {
-    res
-      .status(400)
-      .json({ success: false, error: 'Nome inválido. Use apenas letras e espaços.' })
-    return
-  }
-  if (!SLACK_ID_RE.test(cleanId)) {
-    res.status(400).json({
-      success: false,
-      error:
-        'Slack ID inválido. Deve começar com U e conter letras/números (ex.: U07KXEJU338).',
-    })
+  const v = validateNameId(name, slackId)
+  if (!v.ok) {
+    res.status(400).json({ success: false, error: v.error })
     return
   }
   if (!isStoreConfigured()) {
@@ -216,31 +242,59 @@ app.post('/api/employees', requireAdmin, async (req, res) => {
     return
   }
 
-  // Confirma o ID no Slack (best-effort): bloqueia só se claramente não existir.
-  let verifiedName: string | undefined
-  let warning: string | undefined
-  const check = await getSlackUserName(cleanId)
-  if (check.ok) {
-    verifiedName = check.name
-  } else if (
-    check.error &&
-    /user_not_found|invalid_user|invalid_arguments/i.test(check.error)
-  ) {
-    res.status(400).json({
-      success: false,
-      error: 'Esse Slack ID não existe no seu workspace. Confira o ID.',
-    })
+  const { reject, verifiedName, warning } = await verifySlackId(v.cleanId)
+  if (reject) {
+    res.status(400).json({ success: false, error: reject })
     return
-  } else {
-    warning = 'não foi possível confirmar o ID no Slack (verifique manualmente).'
   }
 
   try {
-    const employees = await addEmployee(cleanName, cleanId)
+    const employees = await addEmployee(v.cleanName, v.cleanId)
     res.json({ success: true, employees, verifiedName, warning })
   } catch (error: unknown) {
     const err = error as Error
     console.error('Erro ao cadastrar funcionário:', err)
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
+
+// Edita um funcionário (renomeia e/ou muda o Slack ID)
+app.put('/api/employees', requireAdmin, async (req, res) => {
+  const { oldName, name, slackId } = req.body as {
+    oldName?: string
+    name?: string
+    slackId?: string
+  }
+
+  if (!oldName) {
+    res.status(400).json({ success: false, error: 'Campo obrigatório: oldName' })
+    return
+  }
+  const v = validateNameId(name, slackId)
+  if (!v.ok) {
+    res.status(400).json({ success: false, error: v.error })
+    return
+  }
+  if (!isStoreConfigured()) {
+    res.status(503).json({
+      success: false,
+      error: 'Armazenamento não configurado. Defina GITHUB_TOKEN no servidor.',
+    })
+    return
+  }
+
+  const { reject, verifiedName, warning } = await verifySlackId(v.cleanId)
+  if (reject) {
+    res.status(400).json({ success: false, error: reject })
+    return
+  }
+
+  try {
+    const employees = await updateEmployee(oldName, v.cleanName, v.cleanId)
+    res.json({ success: true, employees, verifiedName, warning })
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error('Erro ao editar funcionário:', err)
     res.status(500).json({ success: false, error: err.message })
   }
 })

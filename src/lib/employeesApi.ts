@@ -12,68 +12,76 @@ export interface AddEmployeeResult {
   error?: string
 }
 
-/**
- * Busca os funcionários cadastrados pela app (guardados no GitHub via backend).
- * Em caso de erro, retorna vazio para não quebrar a app (o mapa fixo continua valendo).
- */
-export async function fetchEmployees(): Promise<EmployeeMap> {
-  try {
-    const res = await fetch(`${API_URL}/api/employees`)
-    if (!res.ok) return {}
-    const data = await res.json()
-    return (data.employees as EmployeeMap) || {}
-  } catch {
-    return {}
-  }
+export interface FetchEmployeesResult {
+  employees: EmployeeMap
+  configured: boolean
 }
 
 /**
- * Cadastra um novo funcionário (nome + Slack ID).
+ * Busca os funcionários (fonte única no GitHub, via backend).
+ * `configured` = false quando o servidor está sem GITHUB_TOKEN ou inacessível;
+ * nesse caso a app usa o mapa fixo embutido como fallback.
  */
-export async function addEmployee(
+export async function fetchEmployees(): Promise<FetchEmployeesResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/employees`)
+    if (!res.ok) return { employees: {}, configured: false }
+    const data = await res.json()
+    return {
+      employees: (data.employees as EmployeeMap) || {},
+      configured: Boolean(data.configured),
+    }
+  } catch {
+    return { employees: {}, configured: false }
+  }
+}
+
+async function mutate(
+  method: 'POST' | 'PUT' | 'DELETE',
+  body: Record<string, unknown>,
+  adminPassword?: string
+): Promise<AddEmployeeResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/employees`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(adminPassword ? { 'x-admin-password': adminPassword } : {}),
+      },
+      body: JSON.stringify(body),
+    })
+    return await res.json()
+  } catch (err) {
+    return {
+      success: false,
+      error: (err as Error).message || 'Erro de conexão com o servidor',
+    }
+  }
+}
+
+/** Cadastra um novo funcionário (nome + Slack ID). */
+export function addEmployee(
   name: string,
   slackId: string,
   adminPassword?: string
 ): Promise<AddEmployeeResult> {
-  try {
-    const res = await fetch(`${API_URL}/api/employees`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(adminPassword ? { 'x-admin-password': adminPassword } : {}),
-      },
-      body: JSON.stringify({ name, slackId }),
-    })
-    return await res.json()
-  } catch (err) {
-    return {
-      success: false,
-      error: (err as Error).message || 'Erro de conexão com o servidor',
-    }
-  }
+  return mutate('POST', { name, slackId }, adminPassword)
 }
 
-/**
- * Remove um funcionário cadastrado pela app.
- */
-export async function removeEmployee(
+/** Edita um funcionário: renomeia e/ou muda o Slack ID. */
+export function updateEmployee(
+  oldName: string,
+  name: string,
+  slackId: string,
+  adminPassword?: string
+): Promise<AddEmployeeResult> {
+  return mutate('PUT', { oldName, name, slackId }, adminPassword)
+}
+
+/** Remove um funcionário. */
+export function removeEmployee(
   name: string,
   adminPassword?: string
 ): Promise<AddEmployeeResult> {
-  try {
-    const res = await fetch(`${API_URL}/api/employees`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(adminPassword ? { 'x-admin-password': adminPassword } : {}),
-      },
-      body: JSON.stringify({ name }),
-    })
-    return await res.json()
-  } catch (err) {
-    return {
-      success: false,
-      error: (err as Error).message || 'Erro de conexão com o servidor',
-    }
-  }
+  return mutate('DELETE', { name }, adminPassword)
 }

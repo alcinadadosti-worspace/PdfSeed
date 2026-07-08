@@ -122,17 +122,18 @@ export const slackIdMap: Record<string, string> = {
 }
 
 /**
- * Funcionários cadastrados pela própria app (via backend + GitHub).
- * São mesclados com o mapa fixo acima em tempo de execução — os cadastros
- * da app têm prioridade, permitindo inclusive corrigir um ID do mapa fixo.
+ * Funcionários geridos pela app (via backend + GitHub).
+ * Quando carregados (não-nulo), passam a ser a FONTE ÚNICA — o mapa fixo acima
+ * vira só um fallback usado enquanto não carregou ou se o backend estiver
+ * indisponível / sem GITHUB_TOKEN.
  */
-let dynamicMap: Record<string, string> = {}
+let dynamicMap: Record<string, string> | null = null
 
-export function setDynamicEmployees(map: Record<string, string>): void {
-  dynamicMap = map || {}
+export function setDynamicEmployees(map: Record<string, string> | null): void {
+  dynamicMap = map
 }
 
-export function getDynamicEmployees(): Record<string, string> {
+export function getDynamicEmployees(): Record<string, string> | null {
   return dynamicMap
 }
 
@@ -149,18 +150,12 @@ function normalizeName(name: string): string {
 }
 
 /**
- * Lista mesclada: mapa fixo + cadastros da app (estes têm prioridade).
- * Deduplica por nome normalizado.
+ * Lista efetiva de funcionários. Se os cadastros da app já carregaram
+ * (não-nulo), eles são a fonte única; senão, usa o mapa fixo como fallback.
  */
 function getMergedList(): { name: string; slackId: string }[] {
-  const byNorm = new Map<string, { name: string; slackId: string }>()
-  for (const [name, slackId] of Object.entries(slackIdMap)) {
-    byNorm.set(normalizeName(name), { name, slackId })
-  }
-  for (const [name, slackId] of Object.entries(dynamicMap)) {
-    byNorm.set(normalizeName(name), { name, slackId })
-  }
-  return Array.from(byNorm.values())
+  const source = dynamicMap ?? slackIdMap
+  return Object.entries(source).map(([name, slackId]) => ({ name, slackId }))
 }
 
 /**

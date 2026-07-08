@@ -10,13 +10,15 @@ import { extractSinglePage, downloadPDF } from './lib/pdfSplit'
 import { extractEmployeeName } from './lib/nameExtract'
 import { createZipWithPDFs, downloadZip } from './lib/zip'
 import { deduplicateFilenames } from './lib/dedupe'
-import { getSlackIdByName, setDynamicEmployees } from './lib/slackMapping'
+import { getSlackIdByName, setDynamicEmployees, getAllNames } from './lib/slackMapping'
 import { EmailMatch } from './lib/emailMatch'
 import { EmployeeManager } from './components/EmployeeManager'
 import {
   fetchEmployees,
   addEmployee as apiAddEmployee,
+  updateEmployee as apiUpdateEmployee,
   removeEmployee as apiRemoveEmployee,
+  AddEmployeeResult,
 } from './lib/employeesApi'
 
 type AppState =
@@ -48,42 +50,54 @@ export default function App() {
   // Slack matches
   const [slackMatches, setSlackMatches] = useState<EmailMatch[]>([])
 
-  // Funcionários cadastrados pela app (mesclados com o mapa fixo)
-  const [dynamicEmployees, setDynamicEmployeesState] = useState<
-    Record<string, string>
-  >({})
+  // Lista de funcionários (fonte única no backend/GitHub; mapa fixo é fallback)
+  const [employeesList, setEmployeesList] = useState<
+    { name: string; slackId: string }[]
+  >(getAllNames())
+  const [employeesConfigured, setEmployeesConfigured] = useState(false)
   const [showEmployeeManager, setShowEmployeeManager] = useState(false)
 
-  // Carrega os cadastros do backend ao iniciar
+  // Carrega os funcionários do backend ao iniciar
   useEffect(() => {
-    fetchEmployees().then((map) => {
-      setDynamicEmployeesState(map)
-      setDynamicEmployees(map)
+    fetchEmployees().then(({ employees, configured }) => {
+      setEmployeesConfigured(configured)
+      setDynamicEmployees(configured ? employees : null)
+      setEmployeesList(getAllNames())
     })
   }, [])
 
+  const applyEmployeeResult = useCallback((result: AddEmployeeResult) => {
+    if (result.success && result.employees) {
+      setEmployeesConfigured(true)
+      setDynamicEmployees(result.employees)
+      setEmployeesList(getAllNames())
+    }
+    return result
+  }, [])
+
   const handleAddEmployee = useCallback(
-    async (name: string, slackId: string, adminPassword?: string) => {
-      const result = await apiAddEmployee(name, slackId, adminPassword)
-      if (result.success && result.employees) {
-        setDynamicEmployeesState(result.employees)
-        setDynamicEmployees(result.employees)
-      }
-      return result
-    },
-    []
+    async (name: string, slackId: string, adminPassword?: string) =>
+      applyEmployeeResult(await apiAddEmployee(name, slackId, adminPassword)),
+    [applyEmployeeResult]
+  )
+
+  const handleUpdateEmployee = useCallback(
+    async (
+      oldName: string,
+      name: string,
+      slackId: string,
+      adminPassword?: string
+    ) =>
+      applyEmployeeResult(
+        await apiUpdateEmployee(oldName, name, slackId, adminPassword)
+      ),
+    [applyEmployeeResult]
   )
 
   const handleRemoveEmployee = useCallback(
-    async (name: string, adminPassword?: string) => {
-      const result = await apiRemoveEmployee(name, adminPassword)
-      if (result.success && result.employees) {
-        setDynamicEmployeesState(result.employees)
-        setDynamicEmployees(result.employees)
-      }
-      return result
-    },
-    []
+    async (name: string, adminPassword?: string) =>
+      applyEmployeeResult(await apiRemoveEmployee(name, adminPassword)),
+    [applyEmployeeResult]
   )
 
   const handleFileSelect = useCallback(async (file: File) => {
@@ -420,8 +434,10 @@ export default function App() {
 
       {showEmployeeManager && (
         <EmployeeManager
-          employees={dynamicEmployees}
+          employees={employeesList}
+          configured={employeesConfigured}
           onAdd={handleAddEmployee}
+          onUpdate={handleUpdateEmployee}
           onRemove={handleRemoveEmployee}
           onClose={() => setShowEmployeeManager(false)}
         />
