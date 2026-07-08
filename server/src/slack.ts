@@ -74,3 +74,32 @@ export async function testSlackConnection(): Promise<{
     return { ok: false, error: err.message }
   }
 }
+
+/**
+ * Busca o nome real de um usuário pelo Slack ID.
+ * Usado para confirmar, no cadastro, que o ID existe mesmo (evita erro de digitação).
+ * Requer o escopo `users:read` no token do bot.
+ */
+export async function getSlackUserName(slackId: string): Promise<{
+  ok: boolean
+  name?: string
+  error?: string
+}> {
+  try {
+    if (!token) {
+      return { ok: false, error: 'SLACK_BOT_TOKEN não configurado' }
+    }
+    const result = await slack.users.info({ user: slackId })
+    if (result.user) {
+      const name =
+        result.user.real_name ||
+        result.user.profile?.real_name ||
+        result.user.name
+      return { ok: true, name }
+    }
+    return { ok: false, error: 'user_not_found' }
+  } catch (error: unknown) {
+    const err = error as Error
+    return { ok: false, error: err.message }
+  }
+}

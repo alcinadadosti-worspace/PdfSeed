@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { TopBar } from './components/TopBar'
 import { Dropzone } from './components/Dropzone'
 import { ProgressBar } from './components/ProgressBar'
@@ -10,8 +10,14 @@ import { extractSinglePage, downloadPDF } from './lib/pdfSplit'
 import { extractEmployeeName } from './lib/nameExtract'
 import { createZipWithPDFs, downloadZip } from './lib/zip'
 import { deduplicateFilenames } from './lib/dedupe'
-import { getSlackIdByName } from './lib/slackMapping'
+import { getSlackIdByName, setDynamicEmployees } from './lib/slackMapping'
 import { EmailMatch } from './lib/emailMatch'
+import { EmployeeManager } from './components/EmployeeManager'
+import {
+  fetchEmployees,
+  addEmployee as apiAddEmployee,
+  removeEmployee as apiRemoveEmployee,
+} from './lib/employeesApi'
 
 type AppState =
   | 'idle'
@@ -41,6 +47,44 @@ export default function App() {
 
   // Slack matches
   const [slackMatches, setSlackMatches] = useState<EmailMatch[]>([])
+
+  // Funcionários cadastrados pela app (mesclados com o mapa fixo)
+  const [dynamicEmployees, setDynamicEmployeesState] = useState<
+    Record<string, string>
+  >({})
+  const [showEmployeeManager, setShowEmployeeManager] = useState(false)
+
+  // Carrega os cadastros do backend ao iniciar
+  useEffect(() => {
+    fetchEmployees().then((map) => {
+      setDynamicEmployeesState(map)
+      setDynamicEmployees(map)
+    })
+  }, [])
+
+  const handleAddEmployee = useCallback(
+    async (name: string, slackId: string, adminPassword?: string) => {
+      const result = await apiAddEmployee(name, slackId, adminPassword)
+      if (result.success && result.employees) {
+        setDynamicEmployeesState(result.employees)
+        setDynamicEmployees(result.employees)
+      }
+      return result
+    },
+    []
+  )
+
+  const handleRemoveEmployee = useCallback(
+    async (name: string, adminPassword?: string) => {
+      const result = await apiRemoveEmployee(name, adminPassword)
+      if (result.success && result.employees) {
+        setDynamicEmployeesState(result.employees)
+        setDynamicEmployees(result.employees)
+      }
+      return result
+    },
+    []
+  )
 
   const handleFileSelect = useCallback(async (file: File) => {
     setState('processing')
@@ -253,7 +297,11 @@ export default function App() {
 
   return (
     <div className="min-h-screen text-sage-800">
-      <TopBar hasFile={state !== 'idle'} onClear={handleClear} />
+      <TopBar
+        hasFile={state !== 'idle'}
+        onClear={handleClear}
+        onOpenEmployees={() => setShowEmployeeManager(true)}
+      />
 
       <main className="container mx-auto px-4 py-8 pb-20">
         {/* Error Message */}
@@ -369,6 +417,15 @@ export default function App() {
           Seus arquivos nunca saem do navegador. Processamento 100% local.
         </div>
       </footer>
+
+      {showEmployeeManager && (
+        <EmployeeManager
+          employees={dynamicEmployees}
+          onAdd={handleAddEmployee}
+          onRemove={handleRemoveEmployee}
+          onClose={() => setShowEmployeeManager(false)}
+        />
+      )}
     </div>
   )
 }

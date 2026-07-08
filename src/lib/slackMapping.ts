@@ -122,6 +122,21 @@ export const slackIdMap: Record<string, string> = {
 }
 
 /**
+ * Funcionários cadastrados pela própria app (via backend + GitHub).
+ * São mesclados com o mapa fixo acima em tempo de execução — os cadastros
+ * da app têm prioridade, permitindo inclusive corrigir um ID do mapa fixo.
+ */
+let dynamicMap: Record<string, string> = {}
+
+export function setDynamicEmployees(map: Record<string, string>): void {
+  dynamicMap = map || {}
+}
+
+export function getDynamicEmployees(): Record<string, string> {
+  return dynamicMap
+}
+
+/**
  * Normaliza o nome para comparação (remove acentos, uppercase)
  */
 function normalizeName(name: string): string {
@@ -131,6 +146,21 @@ function normalizeName(name: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/**
+ * Lista mesclada: mapa fixo + cadastros da app (estes têm prioridade).
+ * Deduplica por nome normalizado.
+ */
+function getMergedList(): { name: string; slackId: string }[] {
+  const byNorm = new Map<string, { name: string; slackId: string }>()
+  for (const [name, slackId] of Object.entries(slackIdMap)) {
+    byNorm.set(normalizeName(name), { name, slackId })
+  }
+  for (const [name, slackId] of Object.entries(dynamicMap)) {
+    byNorm.set(normalizeName(name), { name, slackId })
+  }
+  return Array.from(byNorm.values())
 }
 
 /**
@@ -188,7 +218,7 @@ export interface SimilarName {
 export function getSimilarNames(inputName: string, limit = 5): SimilarName[] {
   const results: SimilarName[] = []
 
-  for (const [name, slackId] of Object.entries(slackIdMap)) {
+  for (const { name, slackId } of getMergedList()) {
     const similarity = calculateSimilarity(inputName, name)
     if (similarity >= 50) {
       results.push({ name, slackId, similarity })
@@ -204,7 +234,7 @@ export function getSimilarNames(inputName: string, limit = 5): SimilarName[] {
  * Retorna todos os nomes cadastrados no sistema
  */
 export function getAllNames(): { name: string; slackId: string }[] {
-  return Object.entries(slackIdMap).map(([name, slackId]) => ({ name, slackId }))
+  return getMergedList()
 }
 
 /**
@@ -212,16 +242,17 @@ export function getAllNames(): { name: string; slackId: string }[] {
  */
 export function getSlackIdByName(name: string): string | undefined {
   const normalizedInput = normalizeName(name)
+  const merged = getMergedList()
 
   // Primeiro tenta match exato
-  for (const [mapName, slackId] of Object.entries(slackIdMap)) {
+  for (const { name: mapName, slackId } of merged) {
     if (normalizeName(mapName) === normalizedInput) {
       return slackId
     }
   }
 
   // Depois tenta match parcial (um contém o outro)
-  for (const [mapName, slackId] of Object.entries(slackIdMap)) {
+  for (const { name: mapName, slackId } of merged) {
     const normalizedMapName = normalizeName(mapName)
     if (normalizedInput.includes(normalizedMapName) || normalizedMapName.includes(normalizedInput)) {
       return slackId
